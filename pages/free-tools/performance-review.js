@@ -53,7 +53,7 @@ const labelStyle = {
   fontSize: '9px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
-  color: '#444',
+  color: '#888',
   marginBottom: '8px',
   display: 'block',
 }
@@ -63,7 +63,7 @@ const sectionHeadStyle = {
   fontSize: '9px',
   letterSpacing: '0.28em',
   textTransform: 'uppercase',
-  color: '#555',
+  color: '#888',
   marginBottom: '20px',
 }
 
@@ -171,9 +171,9 @@ export default function PerformanceReview() {
               <span
                 key={item}
                 onClick={() => router.push(item === 'Home' ? '/' : '/free-tools')}
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', cursor: 'pointer' }}
-                onMouseEnter={e => e.target.style.color = '#999'}
-                onMouseLeave={e => e.target.style.color = '#555'}
+                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
+                onMouseEnter={e => e.target.style.color = '#fff'}
+                onMouseLeave={e => e.target.style.color = '#888'}
               >
                 {item}
               </span>
@@ -185,15 +185,15 @@ export default function PerformanceReview() {
         <div style={{ padding: '100px 40px 0', maxWidth: '960px', margin: '0 auto' }}>
           <button
             onClick={() => router.push('/free-tools')}
-            style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#444', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '28px', display: 'block' }}
-            onMouseEnter={e => e.target.style.color = '#777'}
-            onMouseLeave={e => e.target.style.color = '#444'}
+            style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '28px', display: 'block' }}
+            onMouseEnter={e => e.target.style.color = '#fff'}
+            onMouseLeave={e => e.target.style.color = '#888'}
           >
             ← Free Tools
           </button>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#444', textTransform: 'uppercase', marginBottom: '10px' }}>// Law Enforcement · HR</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Law Enforcement · HR</div>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Performance Review Engine</div>
-          <div style={{ fontSize: '11px', color: '#444', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px', maxWidth: '560px' }}>
+          <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px', maxWidth: '560px' }}>
             AI-generated evaluations built around your agency's template. Employee names are anonymized on your device before any data is transmitted.
           </div>
           <div style={{ width: '100%', height: '0.5px', background: '#1a1a1a', marginBottom: '56px' }} />
@@ -208,7 +208,7 @@ export default function PerformanceReview() {
               <div style={{ background: '#000', padding: '36px' }}>
                 <div style={sectionHeadStyle}>// Request Access</div>
                 {reqSent ? (
-                  <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.9 }}>
+                  <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9 }}>
                     <span style={{ color: '#fff' }}>Request sent.</span><br />
                     We'll review your submission and send an access code to the email provided. Typically same-day for verified agencies.
                   </div>
@@ -257,9 +257,9 @@ export default function PerformanceReview() {
                     </div>
                     <button
                       type="submit"
-                      style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#777', background: 'transparent', border: '0.5px solid #2a2a2a', padding: '13px 0', cursor: 'pointer', marginTop: '4px' }}
-                      onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#555' }}
-                      onMouseLeave={e => { e.target.style.color = '#777'; e.target.style.borderColor = '#2a2a2a' }}
+                      style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '13px 0', cursor: 'pointer', marginTop: '4px' }}
+                      onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+                      onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
                     >
                       Send Request →
                     </button>
@@ -270,7 +270,7 @@ export default function PerformanceReview() {
               {/* ACCESS CODE */}
               <div style={{ background: '#000', padding: '36px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div style={sectionHeadStyle}>// Enter Access Code</div>
-                <div style={{ fontSize: '11px', color: '#444', lineHeight: 1.9, marginBottom: '24px' }}>
+                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '24px' }}>
                   Already have a code? Enter it below to unlock the tool.
                 </div>
                 <form onSubmit={handleCodeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -289,9 +289,9 @@ export default function PerformanceReview() {
                   )}
                   <button
                     type="submit"
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#777', background: 'transparent', border: '0.5px solid #2a2a2a', padding: '13px 0', cursor: 'pointer' }}
-                    onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#555' }}
-                    onMouseLeave={e => { e.target.style.color = '#777'; e.target.style.borderColor = '#2a2a2a' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '13px 0', cursor: 'pointer' }}
+                    onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+                    onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
                   >
                     Unlock Tool →
                   </button>
@@ -317,7 +317,7 @@ export default function PerformanceReview() {
               {/* ANONYMIZATION */}
               <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>
                 <div style={{ ...sectionHeadStyle, marginBottom: '6px' }}>// Anonymization</div>
-                <div style={{ fontSize: '10px', color: '#3a3a3a', lineHeight: 1.8, marginBottom: '20px' }}>
+                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.8, marginBottom: '20px' }}>
                   Enter employee names (one per line). They will be replaced with Employee A, B, C... before any data leaves your device.
                 </div>
                 <div>
@@ -331,12 +331,12 @@ export default function PerformanceReview() {
                 </div>
                 {names.length > 0 && (
                   <div style={{ marginTop: '14px', padding: '14px', background: '#050505', border: '0.5px solid #1a1a1a' }}>
-                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#2a2a2a', marginBottom: '10px' }}>Anonymization Map</div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '10px' }}>Anonymization Map</div>
                     {names.map((name, i) => (
-                      <div key={i} style={{ fontSize: '10px', color: '#3a3a3a', lineHeight: 2, fontFamily: "'JetBrains Mono', monospace" }}>
-                        <span style={{ color: '#555' }}>{name}</span>
-                        <span style={{ color: '#2a2a2a' }}> → </span>
-                        <span style={{ color: '#666' }}>Employee {String.fromCharCode(65 + i)}</span>
+                      <div key={i} style={{ fontSize: '10px', lineHeight: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+                        <span style={{ color: '#bbb' }}>{name}</span>
+                        <span style={{ color: '#666' }}> → </span>
+                        <span style={{ color: '#999' }}>Employee {String.fromCharCode(65 + i)}</span>
                       </div>
                     ))}
                   </div>
@@ -369,7 +369,7 @@ export default function PerformanceReview() {
               {/* SUPERVISOR NOTES */}
               <div>
                 <label style={labelStyle}>Supervisor Notes</label>
-                <div style={{ fontSize: '10px', color: '#333', lineHeight: 1.8, marginBottom: '10px' }}>
+                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.8, marginBottom: '10px' }}>
                   Paste or type your notes. Employee names listed above will be anonymized automatically.
                 </div>
                 <textarea
@@ -391,20 +391,20 @@ export default function PerformanceReview() {
                     fontSize: '10px',
                     letterSpacing: '0.22em',
                     textTransform: 'uppercase',
-                    color: canGenerate ? '#fff' : '#333',
+                    color: canGenerate ? '#fff' : '#444',
                     background: 'transparent',
-                    border: `0.5px solid ${canGenerate ? '#555' : '#222'}`,
+                    border: `0.5px solid ${canGenerate ? '#666' : '#333'}`,
                     padding: '15px 40px',
                     cursor: canGenerate ? 'pointer' : 'default',
                   }}
-                  onMouseEnter={e => { if (canGenerate) e.target.style.borderColor = '#999' }}
-                  onMouseLeave={e => { if (canGenerate) e.target.style.borderColor = '#555' }}
+                  onMouseEnter={e => { if (canGenerate) e.target.style.borderColor = '#bbb' }}
+                  onMouseLeave={e => { if (canGenerate) e.target.style.borderColor = '#666' }}
                 >
                   {loading ? 'Generating...' : 'Generate Review →'}
                 </button>
                 {loading && (
-                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', color: '#333', textTransform: 'uppercase' }}>
-                    Calling Anthropic API...
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', color: '#888', textTransform: 'uppercase' }}>
+                    Processing on JAR Intel secure servers...
                   </span>
                 )}
               </div>
@@ -415,7 +415,7 @@ export default function PerformanceReview() {
             {apiError && (
               <div style={{ marginTop: '32px', padding: '20px', background: '#0a0000', border: '0.5px solid #3a1a1a' }}>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c44', marginBottom: '6px' }}>Error</div>
-                <div style={{ fontSize: '11px', color: '#844', lineHeight: 1.7 }}>{apiError}</div>
+                <div style={{ fontSize: '11px', color: '#c44', lineHeight: 1.7 }}>{apiError}</div>
               </div>
             )}
 
@@ -426,9 +426,9 @@ export default function PerformanceReview() {
                   <div style={sectionHeadStyle}>// Generated Review</div>
                   <button
                     onClick={() => navigator.clipboard.writeText(output)}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#444', background: 'transparent', border: '0.5px solid #222', padding: '8px 16px', cursor: 'pointer' }}
-                    onMouseEnter={e => { e.target.style.color = '#999'; e.target.style.borderColor = '#555' }}
-                    onMouseLeave={e => { e.target.style.color = '#444'; e.target.style.borderColor = '#222' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '8px 16px', cursor: 'pointer' }}
+                    onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+                    onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
                   >
                     Copy
                   </button>
@@ -440,7 +440,7 @@ export default function PerformanceReview() {
                       style={{
                         fontSize: '11px',
                         lineHeight: 1.9,
-                        color: line.trim() === '' ? 'transparent' : line.match(/^[A-Z\s]{4,}:?$/) ? '#fff' : '#888',
+                        color: line.trim() === '' ? 'transparent' : line.match(/^[A-Z\s]{4,}:?$/) ? '#fff' : '#bbb',
                         fontFamily: "'JetBrains Mono', monospace",
                         fontWeight: line.match(/^[A-Z\s]{4,}:?$/) ? 700 : 300,
                         letterSpacing: line.match(/^[A-Z\s]{4,}:?$/) ? '0.06em' : 'normal',
@@ -453,7 +453,7 @@ export default function PerformanceReview() {
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: '16px', fontSize: '9px', color: '#2a2a2a', lineHeight: 1.8, fontFamily: "'Space Mono', monospace", letterSpacing: '0.1em' }}>
+                <div style={{ marginTop: '16px', fontSize: '9px', color: '#777', lineHeight: 1.8, fontFamily: "'Space Mono', monospace", letterSpacing: '0.1em' }}>
                   Anonymization was applied before transmission. Review your map above to restore names in the final document.
                 </div>
               </div>

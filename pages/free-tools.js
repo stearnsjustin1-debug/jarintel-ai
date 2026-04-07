@@ -40,7 +40,7 @@ export default function FreeTools() {
               <span
                 key={item}
                 onClick={() => router.push(item === 'Home' ? '/' : item === 'Contact' ? '/contact' : '/free-tools')}
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: item === 'Free Tools' ? '#fff' : '#555', cursor: 'pointer' }}
+                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: item === 'Free Tools' ? '#fff' : '#888', cursor: 'pointer' }}
               >
                 {item}
               </span>
@@ -50,9 +50,9 @@ export default function FreeTools() {
 
         {/* CONTENT */}
         <div style={{ padding: '100px 40px 60px' }}>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#444', textTransform: 'uppercase', marginBottom: '10px' }}>// Free Tools</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Free Tools</div>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>AI Tools</div>
-          <div style={{ fontSize: '11px', color: '#444', letterSpacing: '0.08em', marginBottom: '40px' }}>Access requires verification — request access on each tool.</div>
+          <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.08em', marginBottom: '40px' }}>Access requires verification — request access on each tool.</div>
 
           {/* GRID */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1px', background: '#1a1a1a' }}>
@@ -64,10 +64,10 @@ export default function FreeTools() {
               onMouseEnter={e => e.currentTarget.style.background = '#0f0f0f'}
               onMouseLeave={e => e.currentTarget.style.background = '#000'}
             >
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#444', textTransform: 'uppercase' }}>// Law Enforcement · HR</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#888', textTransform: 'uppercase' }}>// Law Enforcement · HR</div>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Performance Review Engine</div>
-              <div style={{ fontSize: '11px', color: '#777', lineHeight: 1.7, flex: 1 }}>AI-generated performance reviews built around your agency's eval template. Anonymized before processing — no PII leaves your device unprotected.</div>
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#444', textTransform: 'uppercase', marginTop: '12px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>Request Access →</div>
+              <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.7, flex: 1 }}>AI-generated performance reviews built around your agency's eval template. Anonymized before processing — no PII leaves your device unprotected.</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#888', textTransform: 'uppercase', marginTop: '12px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>Request Access →</div>
             </div>
 
             {/* COMING SOON */}
