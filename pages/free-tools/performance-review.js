@@ -304,7 +304,17 @@ export default function PerformanceReview() {
     setAuthError('')
     const { error } = await supabase.auth.signInWithOtp({
       email: authEmail,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+      options: {
+        // Point directly at the app page, not the API callback.
+        // For the implicit flow Supabase appends #access_token=... as a URL
+        // fragment — server-side routes can't read fragments, so the token
+        // would be silently dropped on any server redirect. Landing directly
+        // on this page lets the Supabase client (detectSessionInUrl: true)
+        // process the fragment itself and fire onAuthStateChange(SIGNED_IN).
+        // For the OTP token_hash format Supabase sends ?token_hash=&type= as
+        // query params, which Effect 2 below picks up and calls verifyOtp().
+        emailRedirectTo: `${window.location.origin}/free-tools/performance-review`,
+      },
     })
     if (error) setAuthError(error.message)
     else setAuthState('link_sent')

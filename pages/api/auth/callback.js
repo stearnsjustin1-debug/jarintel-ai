@@ -1,16 +1,7 @@
-// Handles the redirect from Supabase after a magic link is clicked.
-//
-// Supabase sends one of two formats depending on flow:
-//   • Implicit flow  → #access_token=...  (URL fragment, invisible server-side)
-//                      The Supabase JS client on the destination page detects
-//                      the fragment via onAuthStateChange automatically.
-//   • PKCE / OTP     → ?token_hash=...&type=magiclink
-//                      We forward these as query params to the app page,
-//                      where verifyOtp() is called client-side.
-//
-// In both cases we end up on the performance review page and the
-// Supabase client handles session establishment.
-
+// Fallback handler for email clients that strip URL fragments.
+// Primary magic link flow redirects directly to /free-tools/performance-review
+// where detectSessionInUrl:true processes the #access_token fragment client-side.
+// This route handles the token_hash/type OTP format as a secondary path.
 export default function handler(req, res) {
   const { token_hash, type, error, error_description } = req.query
 
@@ -24,6 +15,5 @@ export default function handler(req, res) {
     return res.redirect(303, `/free-tools/performance-review?${params}`)
   }
 
-  // Implicit flow: fragment is handled client-side — just land on the page
   res.redirect(303, '/free-tools/performance-review')
 }
