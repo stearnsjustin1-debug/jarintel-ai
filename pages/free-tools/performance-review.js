@@ -206,20 +206,37 @@ export default function PerformanceReview() {
     setAuthState(profile?.approved ? 'approved' : 'pending')
   }
 
-  // Effect 1: persistent auth listener + initial session check
+  // Effect 1: persistent auth listener + initial session restoration
   useEffect(() => {
+    // `initialResolved` prevents double-execution between getSession() and
+    // INITIAL_SESSION — whichever resolves first wins, the other is a no-op.
+    let initialResolved = false
+
+    // getSession() is an explicit fallback. In supabase-js v2 it reads the
+    // stored session from localStorage and refreshes the token if needed.
     supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (initialResolved) return
+      initialResolved = true
       if (s) checkApproval(s)
       else setAuthState('initial')
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
-        if (event === 'SIGNED_IN' && s) {
+        if (event === 'INITIAL_SESSION') {
+          // Fires on every page load with the persisted session (or null).
+          // This is the primary path for returning users after a redeploy.
+          if (initialResolved) return
+          initialResolved = true
+          if (s) await checkApproval(s)
+          else setAuthState('initial')
+        } else if (event === 'SIGNED_IN') {
+          // Fires after a new magic link sign-in — not on session restoration.
+          initialResolved = true
           await checkApproval(s)
-          // Clean the magic link token out of the URL
           router.replace('/free-tools/performance-review', undefined, { shallow: true })
         } else if (event === 'SIGNED_OUT') {
+          initialResolved = false
           setAuthState('initial')
           setSession(null)
         }
