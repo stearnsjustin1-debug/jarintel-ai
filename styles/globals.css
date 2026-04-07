@@ -8,3 +8,29 @@ html, body {
   font-family: 'JetBrains Mono', monospace;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ── Mobile optimizations (≤640px) ────────────────────── */
+@media (max-width: 640px) {
+  /* Nav row padding */
+  .mob-nav-row { padding-left: 20px !important; padding-right: 20px !important; }
+
+  /* Desktop nav links hidden; hamburger shown */
+  .mob-nav-links { display: none !important; }
+  .mob-hamburger { display: flex !important; }
+
+  /* Page content padding */
+  .mob-pad { padding-left: 20px !important; padding-right: 20px !important; }
+
+  /* Two-column → single column */
+  .mob-stack { grid-template-columns: 1fr !important; }
+  .mob-no-pad-left { padding-left: 0 !important; }
+
+  /* Touch targets: 44px min-height */
+  .mob-touch { min-height: 44px !important; padding-top: 13px !important; padding-bottom: 13px !important; }
+
+  /* 16px font on inputs prevents iOS Safari auto-zoom */
+  .mob-input { font-size: 16px !important; }
+
+  /* Readable body text */
+  .mob-body { font-size: 14px !important; line-height: 1.8 !important; }
+}

@@ -64,6 +64,7 @@ export default function Home() {
             background: 'transparent',
             border: '0.5px solid #2a2a2a',
             padding: '14px 36px',
+            minHeight: '44px',
             cursor: 'pointer'
           }}
           onMouseEnter={e => { e.target.style.color='#fff'; e.target.style.borderColor='#777' }}

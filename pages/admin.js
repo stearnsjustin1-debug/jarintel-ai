@@ -134,7 +134,8 @@ export default function Admin() {
       <main style={{ background: '#000', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" }}>
 
         {/* NAV */}
-        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 40px', borderBottom: '0.5px solid #1a1a1a', background: 'rgba(0,0,0,0.96)' }}>
+        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(0,0,0,0.96)', borderBottom: '0.5px solid #1a1a1a' }}>
+          <div className="mob-nav-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 40px' }}>
           <div onClick={() => router.push('/')} style={{ cursor: 'pointer', height: '28px' }}>
             <svg viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg" style={{ height: '28px', width: 'auto', fillRule: 'evenodd', clipRule: 'evenodd' }}>
               <g transform="matrix(1,0,0,1,1.5,1.48917)" style={{fill:'#fff',stroke:'#fff',strokeWidth:'0.42px'}}>
@@ -149,10 +150,11 @@ export default function Admin() {
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#444' }}>
             // Admin
           </div>
+          </div>
         </nav>
 
         {/* PAGE HEADER */}
-        <div style={{ padding: '100px 40px 0', maxWidth: '1100px', margin: '0 auto' }}>
+        <div className="mob-pad" style={{ padding: '100px 40px 0', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Internal</div>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Access Management</div>
           <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px' }}>
@@ -163,13 +165,14 @@ export default function Admin() {
 
         {/* PASSWORD GATE */}
         {!authed && (
-          <div style={{ padding: '0 40px 80px', maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="mob-pad" style={{ padding: '0 40px 80px', maxWidth: '1100px', margin: '0 auto' }}>
             <div style={{ maxWidth: '360px' }}>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', marginBottom: '20px' }}>// Sign In</div>
               <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>Admin Password</label>
                   <input
+                    className="mob-input"
                     style={inputStyle}
                     type="password"
                     value={password}
@@ -187,6 +190,7 @@ export default function Admin() {
                 <button
                   type="submit"
                   disabled={authLoading}
+                  className="mob-touch"
                   style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: authLoading ? '#444' : '#888', background: 'transparent', border: '0.5px solid #333', padding: '13px 0', cursor: authLoading ? 'default' : 'pointer' }}
                   onMouseEnter={e => { if (!authLoading) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
                   onMouseLeave={e => { e.target.style.color = authLoading ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
@@ -200,7 +204,7 @@ export default function Admin() {
 
         {/* DASHBOARD */}
         {authed && (
-          <div style={{ padding: '0 40px 100px', maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="mob-pad" style={{ padding: '0 40px 100px', maxWidth: '1100px', margin: '0 auto' }}>
 
             {/* Controls */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '32px' }}>

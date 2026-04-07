@@ -171,6 +171,7 @@ export default function PerformanceReview() {
   const router = useRouter()
 
   // 'loading' | 'initial' | 'link_sent' | 'checking' | 'pending' | 'approved'
+  const [menuOpen, setMenuOpen] = useState(false)
   const [authState, setAuthState] = useState('loading')
   const [session, setSession] = useState(null)
   const [authEmail, setAuthEmail] = useState('')
@@ -382,32 +383,62 @@ export default function PerformanceReview() {
       <main style={{ background: '#000', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" }}>
 
         {/* NAV */}
-        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 40px', borderBottom: '0.5px solid #1a1a1a', background: 'rgba(0,0,0,0.96)' }}>
-          <div onClick={() => router.push('/')} style={{ cursor: 'pointer', height: '28px' }}>
-            <svg viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg" style={{ height: '28px', width: 'auto', fillRule: 'evenodd', clipRule: 'evenodd' }}>
-              {NAV_LOGO_PATHS}
-            </svg>
+        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(0,0,0,0.96)', borderBottom: '0.5px solid #1a1a1a' }}>
+          <div className="mob-nav-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 40px' }}>
+            <div onClick={() => router.push('/')} style={{ cursor: 'pointer', height: '28px' }}>
+              <svg viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg" style={{ height: '28px', width: 'auto', fillRule: 'evenodd', clipRule: 'evenodd' }}>
+                {NAV_LOGO_PATHS}
+              </svg>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="mob-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+                {['Home', 'Free Tools'].map(item => (
+                  <span key={item} onClick={() => router.push(item === 'Home' ? '/' : '/free-tools')}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
+                    onMouseEnter={e => e.target.style.color = '#fff'}
+                    onMouseLeave={e => e.target.style.color = '#888'}
+                  >{item}</span>
+                ))}
+                {(authState === 'approved' || authState === 'pending') && (
+                  <span onClick={() => supabase.auth.signOut()}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', cursor: 'pointer' }}
+                    onMouseEnter={e => e.target.style.color = '#888'}
+                    onMouseLeave={e => e.target.style.color = '#555'}
+                  >Sign Out</span>
+                )}
+              </div>
+              <button
+                className="mob-hamburger"
+                onClick={() => setMenuOpen(o => !o)}
+                style={{ display: 'none', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', flexDirection: 'column', gap: '5px' }}
+                aria-label="Toggle navigation"
+              >
+                <span style={{ display: 'block', width: '22px', height: '1.5px', background: '#888' }} />
+                <span style={{ display: 'block', width: '22px', height: '1.5px', background: '#888' }} />
+                <span style={{ display: 'block', width: '22px', height: '1.5px', background: '#888' }} />
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
-            {['Home', 'Free Tools'].map(item => (
-              <span key={item} onClick={() => router.push(item === 'Home' ? '/' : '/free-tools')}
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
-                onMouseEnter={e => e.target.style.color = '#fff'}
-                onMouseLeave={e => e.target.style.color = '#888'}
-              >{item}</span>
-            ))}
-            {(authState === 'approved' || authState === 'pending') && (
-              <span onClick={() => supabase.auth.signOut()}
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', cursor: 'pointer' }}
-                onMouseEnter={e => e.target.style.color = '#888'}
-                onMouseLeave={e => e.target.style.color = '#555'}
-              >Sign Out</span>
-            )}
-          </div>
+          {menuOpen && (
+            <div style={{ borderTop: '0.5px solid #111', display: 'flex', flexDirection: 'column' }}>
+              {['Home', 'Free Tools'].map(item => (
+                <span key={item}
+                  onClick={() => { setMenuOpen(false); router.push(item === 'Home' ? '/' : '/free-tools') }}
+                  style={{ fontFamily: "'Space Mono', monospace", fontSize: '13px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', padding: '16px 20px', cursor: 'pointer', borderBottom: '0.5px solid #111', display: 'block' }}
+                >{item}</span>
+              ))}
+              {(authState === 'approved' || authState === 'pending') && (
+                <span
+                  onClick={() => { setMenuOpen(false); supabase.auth.signOut() }}
+                  style={{ fontFamily: "'Space Mono', monospace", fontSize: '13px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', padding: '16px 20px', cursor: 'pointer', display: 'block' }}
+                >Sign Out</span>
+              )}
+            </div>
+          )}
         </nav>
 
         {/* PAGE HEADER */}
-        <div style={{ padding: '100px 40px 0', maxWidth: '960px', margin: '0 auto' }}>
+        <div className="mob-pad" style={{ padding: '100px 40px 0', maxWidth: '960px', margin: '0 auto' }}>
           <button onClick={() => router.push('/free-tools')}
             style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '28px', display: 'block' }}
             onMouseEnter={e => e.target.style.color = '#fff'}
@@ -425,7 +456,7 @@ export default function PerformanceReview() {
 
         {/* Loading */}
         {authState === 'loading' && (
-          <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
+          <div className="mob-pad" style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#444' }}>Initializing...</div>
           </div>
         )}
@@ -440,7 +471,7 @@ export default function PerformanceReview() {
         {/* Login + Request Access gate */}
         {authState === 'initial' && (
           <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
+            <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
 
               {/* Sign In */}
               <div style={{ background: '#000', padding: '36px' }}>
@@ -452,6 +483,7 @@ export default function PerformanceReview() {
                   <div>
                     <label style={labelStyle}>Email Address</label>
                     <input
+                      className="mob-input"
                       style={inputStyle}
                       type="email"
                       value={authEmail}
@@ -465,7 +497,7 @@ export default function PerformanceReview() {
                       {authError}
                     </div>
                   )}
-                  <button type="submit" style={ghostBtn}
+                  <button type="submit" className="mob-touch" style={ghostBtn}
                     onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
                     onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
                   >Send Login Link →</button>
@@ -501,7 +533,7 @@ export default function PerformanceReview() {
                     {reqError && (
                       <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>{reqError}</div>
                     )}
-                    <button type="submit" style={ghostBtn}
+                    <button type="submit" className="mob-touch" style={ghostBtn}
                       onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
                       onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
                     >Send Request →</button>
@@ -549,7 +581,7 @@ export default function PerformanceReview() {
         {/* ── REVIEW TOOL (approved) ────────────────────────────────────────── */}
 
         {authState === 'approved' && (
-          <div style={{ padding: '0 40px 100px', maxWidth: '960px', margin: '0 auto' }}>
+          <div className="mob-pad" style={{ padding: '0 40px 100px', maxWidth: '960px', margin: '0 auto' }}>
 
             {/* Access badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px' }}>
@@ -589,7 +621,7 @@ export default function PerformanceReview() {
               </div>
 
               {/* Eval details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
+              <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
                 <div style={{ background: '#000', padding: '28px' }}>
                   <label style={labelStyle}>Evaluation Period</label>
                   <input style={inputStyle} value={evalPeriod} onChange={e => setEvalPeriod(e.target.value)} placeholder="Jan 1, 2024 – Dec 31, 2024" required />
