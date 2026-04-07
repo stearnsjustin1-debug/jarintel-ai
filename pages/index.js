@@ -9,8 +9,6 @@ export default function Home() {
       <Head>
         <title>JAR Intelligence</title>
         <meta name="description" content="JAR Intelligence — AI Tools" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
       </Head>
 
       <main style={{
