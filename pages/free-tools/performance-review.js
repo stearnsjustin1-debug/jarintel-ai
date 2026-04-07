@@ -196,15 +196,44 @@ export default function PerformanceReview() {
   const [apiError, setApiError] = useState('')
 
   async function checkApproval(userSession) {
+    if (!userSession?.user?.email) {
+      setAuthState('initial')
+      return
+    }
     setAuthState('checking')
     setSession(userSession)
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('approved')
-      .eq('email', userSession.user.email)
-      .single()
-    setAuthState(profile?.approved ? 'approved' : 'pending')
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('approved')
+        .eq('email', userSession.user.email)
+        .single()
+
+      if (error) {
+        // PGRST116 = no rows matched (profile not found → pending)
+        // Any other error → fall back to login so the user isn't stuck
+        console.error('Profile check error:', error.code, error.message)
+        setAuthState(error.code === 'PGRST116' ? 'pending' : 'initial')
+        return
+      }
+
+      setAuthState(profile?.approved ? 'approved' : 'pending')
+    } catch (err) {
+      console.error('checkApproval threw:', err)
+      setAuthState('initial')
+    }
   }
+
+  // Timeout fallback: if checking takes more than 5 s, drop back to the login
+  // form so the user is never permanently stuck on "Verifying access..."
+  useEffect(() => {
+    if (authState !== 'checking') return
+    const t = setTimeout(() => {
+      console.warn('checkApproval timed out — falling back to initial')
+      setAuthState('initial')
+    }, 5000)
+    return () => clearTimeout(t)
+  }, [authState])
 
   // Effect 1: persistent auth listener + initial session restoration
   useEffect(() => {
