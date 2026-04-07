@@ -1,6 +1,25 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { supabaseAdmin } from '../../lib/supabase-admin'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+async function logUsage(token) {
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+  if (!user) return
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('email', user.email)
+    .single()
+
+  if (profile) {
+    await supabaseAdmin.from('usage_logs').insert({
+      user_id: profile.id,
+      tool: 'performance-review',
+    })
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -48,6 +67,12 @@ Write the full evaluation now, with a labeled section for each category followed
         }
       ]
     })
+
+    // Log usage non-blocking — a logging failure must not affect the response
+    const authHeader = req.headers.authorization
+    if (authHeader?.startsWith('Bearer ')) {
+      logUsage(authHeader.slice(7)).catch(err => console.error('Usage log error:', err))
+    }
 
     res.status(200).json({ review: message.content[0].text })
   } catch (err) {
