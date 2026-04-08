@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { supabase } from '../../lib/supabase'
 
 // ── Crime type color map ─────────────────────────────────────────────────────
@@ -118,32 +119,17 @@ const NAV_LOGO_PATHS = (
   </>
 )
 
-// ── Map component (client-only) ───────────────────────────────────────────────
+// ── Map component (client-only, no SSR) ──────────────────────────────────────
 
-function CrimeMap({ incidents, viewState, onViewStateChange }) {
-  const [MapLib, setMapLib] = useState(null)
-  const [popupInfo, setPopupInfo] = useState(null)
-  const [showHeatmap, setShowHeatmap] = useState(false)
-  const [minHour, setMinHour] = useState(0)
-  const [maxHour, setMaxHour] = useState(24)
+const CrimeMap = dynamic(
+  async () => {
+    const { default: Map, Marker, Popup, Source, Layer } = await import('react-map-gl')
 
-  useEffect(() => {
-    // Dynamic import to avoid SSR issues with mapbox-gl
-    Promise.all([
-      import('react-map-gl'),
-      import('mapbox-gl/dist/mapbox-gl.css'),
-    ]).then(([mapgl]) => setMapLib(mapgl))
-  }, [])
-
-  if (!MapLib) {
-    return (
-      <div style={{ width: '100%', height: '600px', background: '#080808', border: '0.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#444', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Loading map...</span>
-      </div>
-    )
-  }
-
-  const { default: Map, Marker, Popup, Source, Layer } = MapLib
+    return function CrimeMapImpl({ incidents, viewState, onViewStateChange }) {
+      const [popupInfo, setPopupInfo] = useState(null)
+      const [showHeatmap, setShowHeatmap] = useState(false)
+      const [minHour, setMinHour] = useState(0)
+      const [maxHour, setMaxHour] = useState(24)
 
   const filteredIncidents = incidents.filter(inc => {
     const h = parseHour(inc.time)
@@ -298,8 +284,18 @@ function CrimeMap({ incidents, viewState, onViewStateChange }) {
       </div>
 
     </div>
-  )
-}
+    )
+  }
+  },
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ width: '100%', height: '600px', background: '#080808', border: '0.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#444', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Loading map...</span>
+      </div>
+    ),
+  }
+)
 
 // ── PDF generation ────────────────────────────────────────────────────────────
 
