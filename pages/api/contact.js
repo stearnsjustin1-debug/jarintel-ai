@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   try {
     await resend.emails.send({
-      from: 'JAR Intelligence <noreply@jarintel.ai>',
+      from: 'JAR Intelligence <onboarding@resend.dev>',
       to: 'mason@jarintel.ai',
       subject: 'New Contact — JAR Intel',
       html: `
