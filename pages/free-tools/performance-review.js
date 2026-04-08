@@ -762,7 +762,7 @@ export default function PerformanceReview() {
               'Monthly supervisor prompts — curated eval guidance',
             ].map((feature, i) => (
               <div key={i} style={{ background: '#000', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ color: '#333', fontSize: '14px', lineHeight: 1, marginTop: '2px', flexShrink: 0 }}>🔒</span>
+                <span style={{ color: '#444', fontSize: '14px', lineHeight: 1, marginTop: '2px', flexShrink: 0 }}>→</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: '#555', lineHeight: 1.6 }}>{feature}</span>
               </div>
             ))}
