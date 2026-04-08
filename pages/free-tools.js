@@ -9,6 +9,7 @@ export default function FreeTools() {
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Free Tools', href: '/free-tools' },
+    { label: 'Solutions', href: '/solutions' },
     { label: 'Contact', href: '/contact' },
   ]
 
@@ -132,6 +133,22 @@ export default function FreeTools() {
             </div>
 
           </div>
+
+          {/* SOLUTIONS CTA */}
+          <div style={{ borderTop: '0.5px solid #1a1a1a', marginTop: '48px', paddingTop: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="mob-body" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '14px', color: '#555' }}>
+              Need something built for your specific workflow?
+            </div>
+            <span
+              onClick={() => router.push('/solutions')}
+              style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onMouseEnter={e => e.target.style.color = '#fff'}
+              onMouseLeave={e => e.target.style.color = '#888'}
+            >
+              Let's Build Something →
+            </span>
+          </div>
+
         </div>
       </main>
     </>
