@@ -59,7 +59,7 @@ const inputStyle = {
   border: '0.5px solid #222',
   color: '#bbb',
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '11px',
+  fontSize: '15px',
   lineHeight: 1.7,
   padding: '12px 14px',
   outline: 'none',
@@ -79,8 +79,8 @@ const labelStyle = {
 
 const sectionHeadStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
-  letterSpacing: '0.28em',
+  fontSize: '16px',
+  letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: '#888',
   marginBottom: '20px',
@@ -581,7 +581,7 @@ export default function CrimeBriefing() {
               <div className="mob-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
                 {['Home', 'Free Tools'].map(item => (
                   <span key={item} onClick={() => router.push(item === 'Home' ? '/' : '/free-tools')}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
                     onMouseEnter={e => e.target.style.color = '#fff'}
                     onMouseLeave={e => e.target.style.color = '#888'}
                   >{item}</span>
@@ -619,8 +619,8 @@ export default function CrimeBriefing() {
             onMouseLeave={e => e.target.style.color = '#888'}
           >← Free Tools</button>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Law Enforcement · Intelligence</div>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Crime Intelligence Briefing</div>
-          <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px', maxWidth: '600px' }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Crime Intelligence Briefing</div>
+          <div style={{ fontSize: '14px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px', maxWidth: '600px' }}>
             Upload a CAD or RMS export. AI analyzes patterns and generates an interactive map with geocoded incidents plus a command-ready intelligence briefing.
           </div>
           <div style={{ width: '100%', height: '0.5px', background: '#1a1a1a', marginBottom: '56px' }} />
@@ -677,7 +677,7 @@ export default function CrimeBriefing() {
                   {csvContent ? (
                     <div>
                       <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#2a6a2a', textTransform: 'uppercase', marginBottom: '6px' }}>✓ File loaded</div>
-                      <div style={{ fontSize: '11px', color: '#888' }}>{csvFileName}</div>
+                      <div style={{ fontSize: '14px', color: '#888' }}>{csvFileName}</div>
                       <div style={{ fontSize: '13px', color: '#bbbbbb', marginTop: '4px' }}>Click to replace</div>
                     </div>
                   ) : (
@@ -713,7 +713,7 @@ export default function CrimeBriefing() {
                     <input type="date" className="mob-input" value={startDate}
                       onChange={e => setStartDate(e.target.value)}
                       style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }} />
-                    <span style={{ color: '#444', fontSize: '11px', flexShrink: 0 }}>–</span>
+                    <span style={{ color: '#444', fontSize: '14px', flexShrink: 0 }}>–</span>
                     <input type="date" className="mob-input" value={endDate}
                       onChange={e => setEndDate(e.target.value)}
                       style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }} />
@@ -725,7 +725,7 @@ export default function CrimeBriefing() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <button type="submit" disabled={!canGenerate}
                   style={{
-                    fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                    fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.22em', textTransform: 'uppercase',
                     color: canGenerate ? '#fff' : '#444', background: 'transparent',
                     border: `0.5px solid ${canGenerate ? '#666' : '#333'}`,
                     padding: '15px 40px', cursor: canGenerate ? 'pointer' : 'default',
@@ -748,7 +748,7 @@ export default function CrimeBriefing() {
             {apiError && (
               <div style={{ marginBottom: '32px', padding: '20px', background: '#0a0000', border: '0.5px solid #3a1a1a' }}>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#c44', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '4px' }}>Error</div>
-                <div style={{ fontSize: '11px', color: '#c44', lineHeight: 1.7 }}>{apiError}</div>
+                <div style={{ fontSize: '14px', color: '#c44', lineHeight: 1.7 }}>{apiError}</div>
               </div>
             )}
 
@@ -760,7 +760,7 @@ export default function CrimeBriefing() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888' }}>// Briefing Output</div>
-                    <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                    <div style={{ fontSize: '14px', color: '#999', marginTop: '4px' }}>
                       {output.incidents.length} incidents geocoded · {jurisdiction}
                     </div>
                   </div>
@@ -911,6 +911,31 @@ export default function CrimeBriefing() {
             )}
 
           </div>
+
+        {/* PRO VERSION */}
+        <div style={{ borderTop: '0.5px solid #1a1a1a', padding: '60px 40px', maxWidth: '760px', margin: '0 auto' }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#555', textTransform: 'uppercase', marginBottom: '12px' }}>// Pro Version</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '20px', fontWeight: 700, color: '#fff', marginBottom: '32px' }}>Unlock the full Intelligence Platform</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1px', background: '#1a1a1a', marginBottom: '32px' }}>
+            {[
+              'Historical data storage — track trends across months',
+              'Multi-jurisdiction analysis — compare districts side-by-side',
+              'CAD system integration — auto-pull live incident data',
+              'Custom patrol zone mapping — overlay your beat boundaries',
+            ].map((feature, i) => (
+              <div key={i} style={{ background: '#000', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ color: '#333', fontSize: '14px', lineHeight: 1, marginTop: '2px', flexShrink: 0 }}>🔒</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: '#555', lineHeight: 1.6 }}>{feature}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => router.push('/contact')}
+            style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '13px 28px', cursor: 'pointer' }}
+            onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+            onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
+          >Request Pro Access →</button>
+        </div>
 
         {/* FOOTER */}
         <div style={{ borderTop: '0.5px solid #111', padding: '24px 40px', textAlign: 'center' }}>

@@ -48,7 +48,7 @@ export default function FreeTools() {
                   <span
                     key={label}
                     onClick={() => router.push(href)}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: label === 'Free Tools' ? '#fff' : '#888', cursor: 'pointer' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.18em', textTransform: 'uppercase', color: label === 'Free Tools' ? '#fff' : '#888', cursor: 'pointer' }}
                     onMouseEnter={e => { if (label !== 'Free Tools') e.target.style.color = '#fff' }}
                     onMouseLeave={e => { if (label !== 'Free Tools') e.target.style.color = '#888' }}
                   >
@@ -86,8 +86,8 @@ export default function FreeTools() {
         {/* CONTENT */}
         <div className="mob-pad" style={{ padding: '100px 40px 60px' }}>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Free Tools</div>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>AI Tools</div>
-          <div className="mob-body" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.08em', marginBottom: '40px' }}>Access requires verification — request access on each tool.</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>AI Tools</div>
+          <div className="mob-body" style={{ fontSize: '14px', color: '#bbb', letterSpacing: '0.08em', marginBottom: '40px' }}>Access requires verification — request access on each tool.</div>
 
           {/* GRID */}
           <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1px', background: '#1a1a1a' }}>

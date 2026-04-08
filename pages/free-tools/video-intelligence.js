@@ -7,7 +7,7 @@ const inputStyle = {
   border: '0.5px solid #222',
   color: '#bbb',
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '11px',
+  fontSize: '15px',
   lineHeight: 1.7,
   padding: '12px 14px',
   outline: 'none',
@@ -17,7 +17,7 @@ const inputStyle = {
 
 const labelStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
+  fontSize: '13px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: '#888',
@@ -126,7 +126,7 @@ export default function VideoIntelligence() {
               <div className="mob-nav-links" style={{ display: 'flex', gap: '36px' }}>
                 {navItems.map(({ label, href }) => (
                   <span key={label} onClick={() => router.push(href)}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
                     onMouseEnter={e => e.target.style.color = '#fff'}
                     onMouseLeave={e => e.target.style.color = '#888'}
                   >{label}</span>
@@ -169,8 +169,8 @@ export default function VideoIntelligence() {
           {/* PAGE HEADER */}
           <div style={{ marginBottom: '56px' }}>
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Video Intelligence · Powered by AIS</div>
-            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Video Intelligence</div>
-            <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, maxWidth: '560px' }}>
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Video Intelligence</div>
+            <div style={{ fontSize: '14px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, maxWidth: '560px' }}>
               Real-time AI analysis of surveillance footage with natural language search.
             </div>
             <div style={{ width: '100%', height: '0.5px', background: '#1a1a1a', marginTop: '40px' }} />
@@ -183,8 +183,8 @@ export default function VideoIntelligence() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: '#1a1a1a' }}>
               {CAPABILITIES.map(({ title, body }) => (
                 <div key={title} style={{ background: '#000', padding: '28px 30px' }}>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '11px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em', marginBottom: '10px' }}>{title}</div>
-                  <div style={{ fontSize: '11px', color: '#888', lineHeight: 1.85 }}>{body}</div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em', marginBottom: '10px' }}>{title}</div>
+                  <div style={{ fontSize: '14px', color: '#888', lineHeight: 1.85 }}>{body}</div>
                 </div>
               ))}
             </div>
@@ -194,7 +194,7 @@ export default function VideoIntelligence() {
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', marginBottom: '24px' }}>// Request a Demo</div>
 
               {submitted ? (
-                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9 }}>
+                <div style={{ fontSize: '14px', color: '#bbb', lineHeight: 1.9 }}>
                   <span style={{ color: '#fff' }}>Request received.</span><br /><br />
                   Your request has been received. A member of the JAR Intel team will be in touch within 24 hours to coordinate your demo.
                 </div>

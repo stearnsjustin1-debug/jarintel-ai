@@ -40,7 +40,7 @@ const inputStyle = {
   border: '0.5px solid #222',
   color: '#bbb',
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '11px',
+  fontSize: '15px',
   lineHeight: 1.7,
   padding: '12px 14px',
   outline: 'none',
@@ -50,7 +50,7 @@ const inputStyle = {
 
 const labelStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
+  fontSize: '13px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: '#888',
@@ -60,8 +60,8 @@ const labelStyle = {
 
 const sectionHeadStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
-  letterSpacing: '0.28em',
+  fontSize: '16px',
+  letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: '#888',
   marginBottom: '20px',
@@ -69,7 +69,7 @@ const sectionHeadStyle = {
 
 const ghostBtn = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
+  fontSize: '12px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: '#888',
@@ -392,7 +392,7 @@ export default function PerformanceReview() {
               <div className="mob-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
                 {['Home', 'Free Tools'].map(item => (
                   <span key={item} onClick={() => router.push(item === 'Home' ? '/' : '/free-tools')}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}
                     onMouseEnter={e => e.target.style.color = '#fff'}
                     onMouseLeave={e => e.target.style.color = '#888'}
                   >{item}</span>
@@ -430,8 +430,8 @@ export default function PerformanceReview() {
             onMouseLeave={e => e.target.style.color = '#888'}
           >← Free Tools</button>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Law Enforcement · HR</div>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Performance Review Engine</div>
-          <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px', maxWidth: '560px' }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Performance Review Engine</div>
+          <div style={{ fontSize: '14px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px', maxWidth: '560px' }}>
             AI-generated evaluations built around your agency's template. Employee names are anonymized on your device before any data is transmitted.
           </div>
           <div style={{ width: '100%', height: '0.5px', background: '#1a1a1a', marginBottom: '56px' }} />
@@ -461,7 +461,7 @@ export default function PerformanceReview() {
               {/* Anonymization */}
               <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>
                 <div style={{ ...sectionHeadStyle, marginBottom: '6px' }}>// Anonymization</div>
-                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.8, marginBottom: '20px' }}>
+                <div style={{ fontSize: '14px', color: '#bbb', lineHeight: 1.8, marginBottom: '20px' }}>
                   Enter employee names (one per line). They will be replaced with Employee A, B, C... before any data leaves your device.
                 </div>
                 <label style={labelStyle}>Employee Names</label>
@@ -475,7 +475,7 @@ export default function PerformanceReview() {
                   <div style={{ marginTop: '14px', padding: '14px', background: '#050505', border: '0.5px solid #1a1a1a' }}>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '10px' }}>Anonymization Map</div>
                     {names.map((name, i) => (
-                      <div key={i} style={{ fontSize: '10px', lineHeight: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+                      <div key={i} style={{ fontSize: '12px', lineHeight: 2, fontFamily: "'JetBrains Mono', monospace" }}>
                         <span style={{ color: '#bbb' }}>{name}</span>
                         <span style={{ color: '#666' }}> → </span>
                         <span style={{ color: '#999' }}>Employee {String.fromCharCode(65 + i)}</span>
@@ -496,7 +496,7 @@ export default function PerformanceReview() {
                     onChange={e => setEvalStartDate(e.target.value)}
                     style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
                   />
-                  <span style={{ color: '#444', fontSize: '11px', flexShrink: 0 }}>–</span>
+                  <span style={{ color: '#444', fontSize: '14px', flexShrink: 0 }}>–</span>
                   <input
                     type="date"
                     className="mob-input"
@@ -538,7 +538,7 @@ export default function PerformanceReview() {
                         })}
                         style={{ accentColor: '#888', width: '13px', height: '13px', flexShrink: 0 }}
                       />
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: selectedCategories.has(cat) ? '#bbb' : '#555', lineHeight: 1.4 }}>{cat}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '14px', color: selectedCategories.has(cat) ? '#bbb' : '#555', lineHeight: 1.4 }}>{cat}</span>
                     </label>
                   ))}
                 </div>
@@ -558,7 +558,7 @@ export default function PerformanceReview() {
                         })}
                         style={{ accentColor: '#888', width: '13px', height: '13px', flexShrink: 0 }}
                       />
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: selectedCategories.has(cat) ? '#bbb' : '#555', lineHeight: 1.4 }}>{cat}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '14px', color: selectedCategories.has(cat) ? '#bbb' : '#555', lineHeight: 1.4 }}>{cat}</span>
                     </label>
                   ))}
                 </div>
@@ -576,7 +576,7 @@ export default function PerformanceReview() {
                       })}
                       style={{ accentColor: '#888', width: '13px', height: '13px', flexShrink: 0 }}
                     />
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: selectedCategories.has(cat) ? '#bbb' : '#555' }}>{cat}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '14px', color: selectedCategories.has(cat) ? '#bbb' : '#555' }}>{cat}</span>
                     <span
                       onClick={e => { e.preventDefault(); setCustomCategories(prev => prev.filter(c => c !== cat)); setSelectedCategories(prev => { const next = new Set(prev); next.delete(cat); return next }) }}
                       style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#444', cursor: 'pointer', marginLeft: '4px' }}
@@ -626,7 +626,7 @@ export default function PerformanceReview() {
               {/* Supervisor notes */}
               <div>
                 <label style={labelStyle}>Supervisor Notes</label>
-                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.8, marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', color: '#bbb', lineHeight: 1.8, marginBottom: '10px' }}>
                   Paste or type your notes. Employee names listed above will be anonymized automatically.
                 </div>
                 <textarea
@@ -640,7 +640,7 @@ export default function PerformanceReview() {
                 {/* Template upload */}
                 <div style={{ marginTop: '12px' }}>
                   <label style={{ ...labelStyle, marginBottom: '8px' }}>Upload Completed Template (Optional)</label>
-                  <div style={{ fontSize: '10px', color: '#555', marginBottom: '8px', lineHeight: 1.7 }}>
+                  <div style={{ fontSize: '12px', color: '#555', marginBottom: '8px', lineHeight: 1.7 }}>
                     Accepts .txt files. For Word (.docx) files, save as Plain Text first. Content will be appended to the notes above.
                   </div>
                   <input
@@ -686,7 +686,7 @@ export default function PerformanceReview() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <button type="submit" disabled={!canGenerate}
                   style={{
-                    fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                    fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.22em', textTransform: 'uppercase',
                     color: canGenerate ? '#fff' : '#444', background: 'transparent',
                     border: `0.5px solid ${canGenerate ? '#666' : '#333'}`,
                     padding: '15px 40px', cursor: canGenerate ? 'pointer' : 'default',
@@ -709,7 +709,7 @@ export default function PerformanceReview() {
             {apiError && (
               <div style={{ marginTop: '32px', padding: '20px', background: '#0a0000', border: '0.5px solid #3a1a1a' }}>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c44', marginBottom: '6px' }}>Error</div>
-                <div style={{ fontSize: '11px', color: '#c44', lineHeight: 1.7 }}>{apiError}</div>
+                <div style={{ fontSize: '14px', color: '#c44', lineHeight: 1.7 }}>{apiError}</div>
               </div>
             )}
 
@@ -730,7 +730,7 @@ export default function PerformanceReview() {
                 <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '32px' }}>
                   {output.split('\n').map((line, i) => (
                     <div key={i} style={{
-                      fontSize: '11px', lineHeight: 1.9, fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '14px', lineHeight: 1.9, fontFamily: "'JetBrains Mono', monospace",
                       color: line.trim() === '' ? 'transparent' : line.match(/^[A-Z\s]{4,}:?$/) ? '#fff' : '#bbb',
                       fontWeight: line.match(/^[A-Z\s]{4,}:?$/) ? 700 : 300,
                       letterSpacing: line.match(/^[A-Z\s]{4,}:?$/) ? '0.06em' : 'normal',
@@ -749,6 +749,31 @@ export default function PerformanceReview() {
             )}
 
           </div>
+
+        {/* PRO VERSION */}
+        <div style={{ borderTop: '0.5px solid #1a1a1a', padding: '60px 40px', maxWidth: '760px', margin: '0 auto' }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#555', textTransform: 'uppercase', marginBottom: '12px' }}>// Pro Version</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '20px', fontWeight: 700, color: '#fff', marginBottom: '32px' }}>Unlock the full Report Studio</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1px', background: '#1a1a1a', marginBottom: '32px' }}>
+            {[
+              'Voice input — dictate notes, no typing required',
+              'Upload your agency template — output matches your format',
+              'Word document export — ready-to-sign .docx output',
+              'Monthly supervisor prompts — curated eval guidance',
+            ].map((feature, i) => (
+              <div key={i} style={{ background: '#000', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ color: '#333', fontSize: '14px', lineHeight: 1, marginTop: '2px', flexShrink: 0 }}>🔒</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: '#555', lineHeight: 1.6 }}>{feature}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => router.push('/contact')}
+            style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '13px 28px', cursor: 'pointer' }}
+            onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+            onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
+          >Request Pro Access →</button>
+        </div>
 
         {/* FOOTER */}
         <div style={{ borderTop: '0.5px solid #111', padding: '24px 40px', textAlign: 'center' }}>

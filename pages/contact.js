@@ -7,7 +7,7 @@ const inputStyle = {
   border: '0.5px solid #222',
   color: '#bbb',
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '11px',
+  fontSize: '15px',
   lineHeight: 1.7,
   padding: '12px 14px',
   outline: 'none',
@@ -17,7 +17,7 @@ const inputStyle = {
 
 const labelStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
+  fontSize: '13px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: '#888',
@@ -97,7 +97,7 @@ export default function Contact() {
                   <span
                     key={label}
                     onClick={() => router.push(href)}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: label === 'Contact' ? '#fff' : '#888', cursor: 'pointer' }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.18em', textTransform: 'uppercase', color: label === 'Contact' ? '#fff' : '#888', cursor: 'pointer' }}
                     onMouseEnter={e => { if (label !== 'Contact') e.target.style.color = '#fff' }}
                     onMouseLeave={e => { if (label !== 'Contact') e.target.style.color = '#888' }}
                   >
@@ -135,12 +135,12 @@ export default function Contact() {
         {/* CONTENT */}
         <div className="mob-pad" style={{ padding: '100px 40px 100px', maxWidth: '640px', margin: '0 auto' }}>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Contact</div>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '48px' }}>Get in Touch</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '48px' }}>Get in Touch</div>
 
           {submitted ? (
             <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '40px' }}>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', marginBottom: '16px' }}>// Message Sent</div>
-              <div className="mob-body" style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '28px' }}>
+              <div className="mob-body" style={{ fontSize: '14px', color: '#bbb', lineHeight: 1.9, marginBottom: '28px' }}>
                 <span style={{ color: '#fff' }}>We received your message.</span><br />
                 We'll be in touch shortly.
               </div>
@@ -202,7 +202,7 @@ export default function Contact() {
                   type="submit"
                   className="mob-touch"
                   disabled={submitting}
-                  style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: submitting ? '#444' : '#fff', background: 'transparent', border: `0.5px solid ${submitting ? '#333' : '#666'}`, padding: '15px 48px', cursor: submitting ? 'default' : 'pointer' }}
+                  style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', letterSpacing: '0.22em', textTransform: 'uppercase', color: submitting ? '#444' : '#fff', background: 'transparent', border: `0.5px solid ${submitting ? '#333' : '#666'}`, padding: '15px 48px', cursor: submitting ? 'default' : 'pointer' }}
                   onMouseEnter={e => { if (!submitting) e.target.style.borderColor = '#bbb' }}
                   onMouseLeave={e => { if (!submitting) e.target.style.borderColor = '#666' }}
                 >

@@ -57,7 +57,7 @@ export default function Home() {
           onClick={() => router.push('/free-tools')}
           style={{
             fontFamily: "'Space Mono', monospace",
-            fontSize: '10px',
+            fontSize: '12px',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
             color: '#777',

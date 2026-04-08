@@ -7,7 +7,7 @@ const inputStyle = {
   border: '0.5px solid #222',
   color: '#bbb',
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '11px',
+  fontSize: '15px',
   padding: '12px 14px',
   outline: 'none',
   width: '100%',
@@ -16,7 +16,7 @@ const inputStyle = {
 
 const labelStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
+  fontSize: '13px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: '#888',
@@ -26,8 +26,8 @@ const labelStyle = {
 
 const thStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '8px',
-  letterSpacing: '0.22em',
+  fontSize: '12px',
+  letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: '#666',
   textAlign: 'left',
@@ -38,7 +38,7 @@ const thStyle = {
 
 const tdStyle = {
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '11px',
+  fontSize: '14px',
   color: '#bbb',
   padding: '12px 16px',
   borderBottom: '0.5px solid #111',
@@ -204,8 +204,8 @@ export default function Admin() {
         {/* PAGE HEADER */}
         <div className="mob-pad" style={{ padding: '100px 40px 0', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Internal</div>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Access Management</div>
-          <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px' }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Access Management</div>
+          <div style={{ fontSize: '14px', color: '#bbb', letterSpacing: '0.06em', lineHeight: 1.8, marginBottom: '48px' }}>
             Review and approve access requests for JAR Intelligence tools.
           </div>
           <div style={{ width: '100%', height: '0.5px', background: '#1a1a1a', marginBottom: '56px' }} />
@@ -317,7 +317,7 @@ export default function Admin() {
             )}
 
             {profiles.length === 0 && !loadingProfiles && (
-              <div style={{ fontSize: '11px', color: '#444', lineHeight: 1.8 }}>No access requests yet.</div>
+              <div style={{ fontSize: '14px', color: '#444', lineHeight: 1.8 }}>No access requests yet.</div>
             )}
 
             {/* ── USAGE SUMMARY ──────────────────────────────────────────── */}
@@ -335,12 +335,12 @@ export default function Admin() {
               <div style={{ display: 'flex', gap: '1px', background: '#1a1a1a', marginBottom: '32px', flexWrap: 'wrap' }}>
                 <div style={{ background: '#000', padding: '20px 28px', minWidth: '160px' }}>
                   <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#666', marginBottom: '8px' }}>Total Generations</div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff' }}>{totalGenerations}</div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff' }}>{totalGenerations}</div>
                 </div>
                 {Object.entries(toolTotals).map(([tool, count]) => (
                   <div key={tool} style={{ background: '#000', padding: '20px 28px', minWidth: '160px' }}>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#666', marginBottom: '8px' }}>{tool}</div>
-                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff' }}>{count}</div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#fff' }}>{count}</div>
                   </div>
                 ))}
               </div>
@@ -372,7 +372,7 @@ export default function Admin() {
                           {Object.keys(toolTotals).map(tool => (
                             <td key={tool} style={{ ...tdStyle, color: '#888' }}>{u.by_tool[tool] ?? 0}</td>
                           ))}
-                          <td style={{ ...tdStyle, color: '#666', fontSize: '10px' }}>
+                          <td style={{ ...tdStyle, color: '#666', fontSize: '12px' }}>
                             {u.last_active
                               ? new Date(u.last_active).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                               : '—'}
@@ -385,7 +385,7 @@ export default function Admin() {
               )}
 
               {!loadingUsage && usageUsers.length === 0 && (
-                <div style={{ fontSize: '11px', color: '#444' }}>No usage data yet.</div>
+                <div style={{ fontSize: '14px', color: '#444' }}>No usage data yet.</div>
               )}
             </div>
 
@@ -421,14 +421,14 @@ export default function Admin() {
                             onMouseEnter={e => e.currentTarget.style.background = '#0a0a0a'}
                             onMouseLeave={e => e.currentTarget.style.background = '#000'}
                           >
-                            <td style={{ ...tdStyle, color: '#666', fontSize: '10px', whiteSpace: 'nowrap' }}>
+                            <td style={{ ...tdStyle, color: '#666', fontSize: '12px', whiteSpace: 'nowrap' }}>
                               {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </td>
-                            <td style={{ ...tdStyle, fontSize: '10px' }}>{r.email}</td>
+                            <td style={{ ...tdStyle, fontSize: '12px' }}>{r.email}</td>
                             <td style={{ ...tdStyle, color: r.agency !== '—' ? '#bbb' : '#444' }}>{r.agency}</td>
                             <td style={{ ...tdStyle, fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>{r.tool}</td>
                             <td style={{ ...tdStyle, color: r.jurisdiction ? '#bbb' : '#444' }}>{r.jurisdiction || '—'}</td>
-                            <td style={{ ...tdStyle, color: '#555', fontSize: '10px', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.preview}</td>
+                            <td style={{ ...tdStyle, color: '#555', fontSize: '12px', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.preview}</td>
                             <td style={tdStyle}>
                               <button
                                 onClick={() => setExpandedReport(expandedReport === r.id ? null : r.id)}
@@ -443,7 +443,7 @@ export default function Admin() {
                           {expandedReport === r.id && (
                             <tr key={`${r.id}-expand`} style={{ background: '#050505' }}>
                               <td colSpan={7} style={{ padding: '24px 20px', borderBottom: '0.5px solid #1a1a1a' }}>
-                                <pre style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#bbb', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, lineHeight: 1.8 }}>
+                                <pre style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: '#bbb', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, lineHeight: 1.8 }}>
                                   {r.tool === 'crime-briefing'
                                     ? (() => {
                                         try {
@@ -466,7 +466,7 @@ export default function Admin() {
               )}
 
               {!loadingReports && reports.length === 0 && (
-                <div style={{ fontSize: '11px', color: '#444' }}>No reports saved yet.</div>
+                <div style={{ fontSize: '14px', color: '#444' }}>No reports saved yet.</div>
               )}
             </div>
 
@@ -511,7 +511,7 @@ function ProfileTable({ rows, approving, approveErrors, onApprove, usageByEmail 
                     {p.approved ? 'Approved' : 'Pending'}
                   </span>
                 </td>
-                <td style={{ ...tdStyle, color: '#666', fontSize: '10px' }}>
+                <td style={{ ...tdStyle, color: '#666', fontSize: '12px' }}>
                   {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </td>
                 <td style={{ ...tdStyle, fontFamily: "'Space Mono', monospace", color: u ? '#fff' : '#444', fontWeight: u ? 700 : 400 }}>
