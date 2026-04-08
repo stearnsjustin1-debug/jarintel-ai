@@ -769,12 +769,6 @@ export default function PerformanceReview() {
                   <div style={sectionHeadStyle}>// Generated Review</div>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
-                      onClick={() => navigator.clipboard.writeText(output)}
-                      style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '8px 16px', cursor: 'pointer' }}
-                      onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
-                      onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
-                    >Copy</button>
-                    <button
                       onClick={() => generatePDF(output, evalPeriod)}
                       style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '8px 16px', cursor: 'pointer' }}
                       onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
