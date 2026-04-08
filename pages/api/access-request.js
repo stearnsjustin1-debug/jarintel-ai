@@ -40,29 +40,57 @@ export default async function handler(req, res) {
 
   const password = generatePassword()
 
-  // Insert profile with temp_password stored in plain text until admin approves
-  const { error: insertError } = await supabaseAdmin
+  // Upsert profile — insert on first request, update on re-submission.
+  // Resets approved=false and stores a fresh temp_password each time.
+  const { error: profileError } = await supabaseAdmin
     .from('profiles')
-    .insert({ email, full_name, agency, role, approved: false, temp_password: password })
+    .upsert(
+      { email, full_name, agency, role, approved: false, temp_password: password },
+      { onConflict: 'email' }
+    )
 
-  if (insertError) {
-    if (insertError.code === '23505') {
-      return res.status(200).json({ ok: true, existing: true })
-    }
-    console.error('Access request insert error:', insertError)
+  if (profileError) {
+    console.error('Access request profile error:', profileError)
     return res.status(500).json({ error: 'Failed to submit request. Please try again.' })
   }
 
-  // Create auth user immediately so they can sign in once approved
-  const { error: authError } = await supabaseAdmin.auth.admin.createUser({
+  // Create the Supabase auth user with email pre-confirmed
+  const { error: createError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
   })
 
-  if (authError) {
-    // Log but don't fail — profile is saved and admin can still approve
-    console.error('Auth user creation error:', authError)
+  if (createError) {
+    const isEmailExists =
+      createError.code === 'email_exists' ||
+      createError.message?.toLowerCase().includes('already been registered') ||
+      createError.message?.toLowerCase().includes('already registered')
+
+    if (isEmailExists) {
+      // User exists in auth — find them by email and update their password.
+      // supabase-js admin API has no getUserByEmail, so we list and filter.
+      const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        perPage: 1000,
+      })
+      if (listError) {
+        console.error('Auth listUsers error:', listError)
+      } else {
+        const existing = listData?.users?.find(u => u.email === email)
+        if (existing) {
+          const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+            existing.id,
+            { password }
+          )
+          if (updateError) console.error('Auth user password update error:', updateError)
+        } else {
+          console.error('email_exists but user not found in listUsers for:', email)
+        }
+      }
+    } else {
+      // Non-email-exists error — log but don't fail. Profile is saved.
+      console.error('Auth user creation error:', createError)
+    }
   }
 
   // Non-blocking admin notification
