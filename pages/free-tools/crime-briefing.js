@@ -69,10 +69,10 @@ const inputStyle = {
 
 const labelStyle = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
+  fontSize: '13px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
-  color: '#888',
+  color: '#bbbbbb',
   marginBottom: '8px',
   display: 'block',
 }
@@ -865,8 +865,8 @@ export default function CrimeBriefing() {
               {/* CSV Upload */}
               <div>
                 <label style={labelStyle}>CAD / RMS Export (CSV)</label>
-                <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.8, marginBottom: '14px' }}>
-                  Required columns: <span style={{ color: '#888' }}>date, time, type, address</span> — description is optional.<br />
+                <div style={{ fontSize: '13px', color: '#bbbbbb', lineHeight: 1.8, marginBottom: '14px' }}>
+                  Required columns: <span style={{ color: '#bbbbbb' }}>date, time, type, address</span> — description is optional.<br />
                   Export your CAD or RMS data as CSV and drag it here.
                 </div>
                 <div
@@ -894,14 +894,14 @@ export default function CrimeBriefing() {
                     <div>
                       <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#2a6a2a', textTransform: 'uppercase', marginBottom: '6px' }}>✓ File loaded</div>
                       <div style={{ fontSize: '11px', color: '#888' }}>{csvFileName}</div>
-                      <div style={{ fontSize: '10px', color: '#444', marginTop: '4px' }}>Click to replace</div>
+                      <div style={{ fontSize: '13px', color: '#bbbbbb', marginTop: '4px' }}>Click to replace</div>
                     </div>
                   ) : (
                     <div>
-                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#555', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '13px', letterSpacing: '0.2em', color: '#bbbbbb', textTransform: 'uppercase', marginBottom: '6px' }}>
                         {isDragging ? 'Drop to upload' : 'Drag & drop CSV or click to browse'}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#333' }}>CAD export · RMS export · Spreadsheet</div>
+                      <div style={{ fontSize: '13px', color: '#bbbbbb' }}>CAD export · RMS export · Spreadsheet</div>
                     </div>
                   )}
                 </div>
@@ -919,7 +919,7 @@ export default function CrimeBriefing() {
                     placeholder="Austin, TX"
                     required
                   />
-                  <div style={{ fontSize: '10px', color: '#333', marginTop: '8px', lineHeight: 1.6 }}>
+                  <div style={{ fontSize: '13px', color: '#bbbbbb', marginTop: '8px', lineHeight: 1.6 }}>
                     Used to accurately geocode addresses. Include city and state.
                   </div>
                 </div>
@@ -1016,10 +1016,10 @@ export default function CrimeBriefing() {
                     {(() => {
                       const b = output.briefing
                       const secHead = title => (
-                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', marginBottom: '12px', paddingBottom: '6px', borderBottom: '0.5px solid #222' }}>{title}</div>
+                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '15px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ffffff', marginBottom: '12px', paddingBottom: '6px', borderBottom: '0.5px solid #222' }}>{title}</div>
                       )
-                      const bullet = { display: 'flex', gap: '10px', marginBottom: '10px', fontSize: '11px', color: '#ccc', lineHeight: 1.85 }
-                      const dot = { color: '#555', flexShrink: 0 }
+                      const bullet = { display: 'flex', gap: '10px', marginBottom: '10px', fontSize: '13px', color: '#dddddd', lineHeight: 1.85 }
+                      const dot = { color: '#aaaaaa', flexShrink: 0 }
                       const bold = { color: '#fff', fontWeight: 600 }
 
                       return (
@@ -1029,7 +1029,7 @@ export default function CrimeBriefing() {
                             <div style={{ marginBottom: '32px' }}>
                               {secHead('Executive Summary')}
                               {String(b.summary).split(/\n\n+/).filter(p => p.trim()).map((para, i) => (
-                                <p key={i} style={{ fontSize: '11px', color: '#ccc', lineHeight: 1.9, margin: '0 0 12px' }}>{para.trim()}</p>
+                                <p key={i} style={{ fontSize: '13px', color: '#dddddd', lineHeight: 1.9, margin: '0 0 12px' }}>{para.trim()}</p>
                               ))}
                             </div>
                           )}
@@ -1064,13 +1064,13 @@ export default function CrimeBriefing() {
                                 const isSubHead = first.endsWith(':') || /^[A-Z][A-Z\s\-\/()0-9]+$/.test(first)
                                 if (isSubHead && lines.length > 1) return (
                                   <div key={i} style={{ marginBottom: '14px' }}>
-                                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '6px' }}>{first.replace(/:$/, '')}</div>
+                                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#aaaaaa', marginBottom: '6px' }}>{first.replace(/:$/, '')}</div>
                                     {lines.slice(1).filter(l => l.trim()).map((ln, j) => (
-                                      <p key={j} style={{ fontSize: '11px', color: '#ccc', lineHeight: 1.9, margin: '0 0 6px' }}>{ln.trim()}</p>
+                                      <p key={j} style={{ fontSize: '13px', color: '#dddddd', lineHeight: 1.9, margin: '0 0 6px' }}>{ln.trim()}</p>
                                     ))}
                                   </div>
                                 )
-                                return <p key={i} style={{ fontSize: '11px', color: '#ccc', lineHeight: 1.9, margin: '0 0 12px' }}>{block.trim()}</p>
+                                return <p key={i} style={{ fontSize: '13px', color: '#dddddd', lineHeight: 1.9, margin: '0 0 12px' }}>{block.trim()}</p>
                               })}
                             </div>
                           )}
@@ -1083,13 +1083,13 @@ export default function CrimeBriefing() {
                                 {Array.isArray(b.patrolRecommendations)
                                   ? b.patrolRecommendations.map((item, i) => (
                                     <li key={i} style={bullet}>
-                                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#555', flexShrink: 0, minWidth: '16px' }}>{i + 1}.</span>
+                                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#aaaaaa', flexShrink: 0, minWidth: '16px' }}>{i + 1}.</span>
                                       <span><span style={bold}>{item.title}</span>{item.detail ? ` — ${item.detail}` : ''}</span>
                                     </li>
                                   ))
                                   : String(b.patrolRecommendations).split(/\n/).filter(l => l.trim()).map((line, i) => (
                                     <li key={i} style={bullet}>
-                                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#555', flexShrink: 0, minWidth: '16px' }}>{i + 1}.</span>
+                                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#aaaaaa', flexShrink: 0, minWidth: '16px' }}>{i + 1}.</span>
                                       <span>{line.replace(/^\d+\.\s*/, '')}</span>
                                     </li>
                                   ))
