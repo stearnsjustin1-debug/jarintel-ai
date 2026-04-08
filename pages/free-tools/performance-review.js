@@ -253,6 +253,12 @@ export default function PerformanceReview() {
   const [authError, setAuthError] = useState('')
   const [signingIn, setSigningIn] = useState(false)
 
+  const [showForgot, setShowForgot] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSending, setResetSending] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [resetError, setResetError] = useState('')
+
   // Request form
   const [reqName, setReqName] = useState('')
   const [reqAgency, setReqAgency] = useState('')
@@ -407,6 +413,29 @@ export default function PerformanceReview() {
       setAuthError('Sign-in failed. Please check your connection and try again.')
     } finally {
       setSigningIn(false)
+    }
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault()
+    setResetError('')
+    setResetSending(true)
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setResetSent(true)
+      } else {
+        setResetError(data.error || 'Failed to send reset. Please try again.')
+      }
+    } catch {
+      setResetError('Request failed. Please check your connection and try again.')
+    } finally {
+      setResetSending(false)
     }
   }
 
@@ -571,51 +600,110 @@ export default function PerformanceReview() {
           <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
             <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
 
-              {/* Sign In */}
+              {/* Sign In / Forgot Password */}
               <div style={{ background: '#000', padding: '36px' }}>
-                <div style={sectionHeadStyle}>// Sign In</div>
-                <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '24px' }}>
-                  Enter your credentials below. Login details are sent to your email when access is approved.
-                </div>
-                <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <label style={labelStyle}>Email Address</label>
-                    <input
-                      className="mob-input"
-                      style={inputStyle}
-                      type="email"
-                      value={authEmail}
-                      onChange={e => { setAuthEmail(e.target.value); setAuthError('') }}
-                      placeholder="you@agency.gov"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Password</label>
-                    <input
-                      className="mob-input"
-                      style={inputStyle}
-                      type="password"
-                      value={authPassword}
-                      onChange={e => { setAuthPassword(e.target.value); setAuthError('') }}
-                      placeholder="••••••••••••••••"
-                      required
-                    />
-                  </div>
-                  {authError && (
-                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>
-                      {authError}
+                {showForgot ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
+                      <span
+                        onClick={() => { setShowForgot(false); setResetSent(false); setResetError('') }}
+                        style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#444', cursor: 'pointer' }}
+                        onMouseEnter={e => e.target.style.color = '#888'}
+                        onMouseLeave={e => e.target.style.color = '#444'}
+                      >← Back</span>
+                      <div style={sectionHeadStyle}>// Reset Password</div>
                     </div>
-                  )}
-                  <button
-                    type="submit"
-                    className="mob-touch"
-                    disabled={signingIn}
-                    style={{ ...ghostBtn, color: signingIn ? '#444' : '#888', cursor: signingIn ? 'default' : 'pointer' }}
-                    onMouseEnter={e => { if (!signingIn) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
-                    onMouseLeave={e => { e.target.style.color = signingIn ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
-                  >{signingIn ? 'Signing in...' : 'Sign In →'}</button>
-                </form>
+                    {resetSent ? (
+                      <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9 }}>
+                        <span style={{ color: '#fff' }}>New credentials sent to your email.</span><br />
+                        Check your inbox for updated login instructions.
+                      </div>
+                    ) : (
+                      <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '4px' }}>
+                          Enter your email address and we'll send new credentials.
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Email Address</label>
+                          <input
+                            className="mob-input"
+                            style={inputStyle}
+                            type="email"
+                            value={resetEmail}
+                            onChange={e => { setResetEmail(e.target.value); setResetError('') }}
+                            placeholder="you@agency.gov"
+                            required
+                          />
+                        </div>
+                        {resetError && (
+                          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>
+                            {resetError}
+                          </div>
+                        )}
+                        <button
+                          type="submit"
+                          className="mob-touch"
+                          disabled={resetSending}
+                          style={{ ...ghostBtn, color: resetSending ? '#444' : '#888', cursor: resetSending ? 'default' : 'pointer' }}
+                          onMouseEnter={e => { if (!resetSending) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
+                          onMouseLeave={e => { e.target.style.color = resetSending ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
+                        >{resetSending ? 'Sending...' : 'Send Reset Link →'}</button>
+                      </form>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={sectionHeadStyle}>// Sign In</div>
+                    <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '24px' }}>
+                      Enter your credentials below. Login details are sent to your email when access is approved.
+                    </div>
+                    <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div>
+                        <label style={labelStyle}>Email Address</label>
+                        <input
+                          className="mob-input"
+                          style={inputStyle}
+                          type="email"
+                          value={authEmail}
+                          onChange={e => { setAuthEmail(e.target.value); setAuthError('') }}
+                          placeholder="you@agency.gov"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Password</label>
+                        <input
+                          className="mob-input"
+                          style={inputStyle}
+                          type="password"
+                          value={authPassword}
+                          onChange={e => { setAuthPassword(e.target.value); setAuthError('') }}
+                          placeholder="••••••••••••••••"
+                          required
+                        />
+                      </div>
+                      {authError && (
+                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>
+                          {authError}
+                        </div>
+                      )}
+                      <button
+                        type="submit"
+                        className="mob-touch"
+                        disabled={signingIn}
+                        style={{ ...ghostBtn, color: signingIn ? '#444' : '#888', cursor: signingIn ? 'default' : 'pointer' }}
+                        onMouseEnter={e => { if (!signingIn) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
+                        onMouseLeave={e => { e.target.style.color = signingIn ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
+                      >{signingIn ? 'Signing in...' : 'Sign In →'}</button>
+                      <span
+                        onClick={() => { setShowForgot(true); setResetEmail(authEmail); setAuthError('') }}
+                        style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#444', cursor: 'pointer', textAlign: 'center', paddingTop: '4px' }}
+                        onMouseEnter={e => e.target.style.color = '#888'}
+                        onMouseLeave={e => e.target.style.color = '#444'}
+                      >Forgot your password?</span>
+                    </form>
+                  </>
+                )}
               </div>
 
               {/* Request Access */}
