@@ -827,6 +827,23 @@ export default function PerformanceReview() {
           </div>
         )}
 
+        {/* FOOTER */}
+        <div style={{ borderTop: '0.5px solid #111', padding: '24px 40px', textAlign: 'center' }}>
+          <span
+            onClick={() => router.push('/terms')}
+            style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#333', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}
+            onMouseEnter={e => e.target.style.color = '#666'}
+            onMouseLeave={e => e.target.style.color = '#333'}
+          >Terms of Service</span>
+          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#222', margin: '0 12px' }}>·</span>
+          <span
+            onClick={() => router.push('/privacy')}
+            style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#333', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}
+            onMouseEnter={e => e.target.style.color = '#666'}
+            onMouseLeave={e => e.target.style.color = '#333'}
+          >Privacy Policy</span>
+        </div>
+
       </main>
     </>
   )
