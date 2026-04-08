@@ -12,7 +12,7 @@ async function sendNotification({ full_name, agency, email, role }) {
   const resend = new Resend(process.env.RESEND_API_KEY)
   await resend.emails.send({
     from: 'JAR Intelligence <onboarding@resend.dev>',
-    to: 'mason@jarintel.ai',
+    to: 'justin@jarintel.ai',
     subject: 'New Access Request — JAR Intel',
     html: `
       <div style="font-family: monospace; background: #000; color: #bbb; padding: 32px; max-width: 560px;">

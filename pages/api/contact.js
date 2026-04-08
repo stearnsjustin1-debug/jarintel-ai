@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   try {
     await resend.emails.send({
       from: 'JAR Intelligence <onboarding@resend.dev>',
-      to: 'mason@jarintel.ai',
+      to: 'justin@jarintel.ai',
       subject: 'New Contact — JAR Intel',
       html: `
         <div style="font-family: monospace; background: #000; color: #bbb; padding: 32px; max-width: 560px;">
