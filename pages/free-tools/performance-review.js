@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 
 // ── Shared constants ────────────────────────────────────────────────────────
@@ -173,6 +173,7 @@ export default function PerformanceReview() {
   // 'loading' | 'initial' | 'link_sent' | 'checking' | 'pending' | 'approved'
   const [menuOpen, setMenuOpen] = useState(false)
   const [authState, setAuthState] = useState('loading')
+  const authStateRef = useRef('loading')
   const [session, setSession] = useState(null)
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
@@ -227,6 +228,10 @@ export default function PerformanceReview() {
     }
   }
 
+  // Keep ref in sync so the visibility handler always reads the latest value
+  // without needing to re-register the event listener on every state change.
+  useEffect(() => { authStateRef.current = authState }, [authState])
+
   // Timeout fallback: if checking takes more than 5 s, drop back to the login
   // form so the user is never permanently stuck on "Verifying access..."
   useEffect(() => {
@@ -261,6 +266,9 @@ export default function PerformanceReview() {
         } else if (event === 'SIGNED_IN') {
           initialResolved = true
           await checkApproval(s)
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Keep session state current after background token refresh
+          if (s) setSession(s)
         } else if (event === 'SIGNED_OUT') {
           initialResolved = false
           setAuthState('initial')
@@ -269,6 +277,29 @@ export default function PerformanceReview() {
       }
     )
     return () => subscription.unsubscribe()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Restore session when the tab regains visibility.
+  // Browsers suspend JS timers while a tab is hidden, so supabase-js can fire
+  // SIGNED_OUT when it can't refresh the token on time. Re-reading the session
+  // from localStorage on focus corrects the state without requiring a new login.
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState !== 'visible') return
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        const cur = authStateRef.current
+        if (s && cur !== 'approved' && cur !== 'pending' && cur !== 'checking') {
+          // Session still valid but UI state was incorrectly cleared — restore it
+          checkApproval(s)
+        } else if (!s && (cur === 'approved' || cur === 'pending')) {
+          // Genuinely signed out (e.g. token truly expired)
+          setAuthState('initial')
+          setSession(null)
+        }
+      })
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignIn(e) {
