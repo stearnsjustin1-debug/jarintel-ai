@@ -118,14 +118,18 @@ export default function FreeTools() {
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#888', textTransform: 'uppercase', marginTop: '12px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>Request Access →</div>
             </div>
 
-            {/* COMING SOON */}
-            {['Video Intelligence'].map((name) => (
-              <div key={name} style={{ background: '#000', padding: '30px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px', opacity: 0.3 }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#444', textTransform: 'uppercase' }}>// Coming Soon · Powered by AIS</div>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>{name}</div>
-                <div className="mob-body" style={{ fontSize: '11px', color: '#777', lineHeight: 1.7, flex: 1 }}>Real-time AI analysis of surveillance footage with natural language search. Built on AIS — reduce 60 days of manual footage review to under a week. Query any camera feed like a conversation.</div>
-              </div>
-            ))}
+            {/* ACTIVE CARD — Video Intelligence */}
+            <div
+              onClick={() => router.push('/free-tools/video-intelligence')}
+              style={{ background: '#000', padding: '30px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#0f0f0f'}
+              onMouseLeave={e => e.currentTarget.style.background = '#000'}
+            >
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#888', textTransform: 'uppercase' }}>// Law Enforcement · Intelligence</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Video Intelligence</div>
+              <div className="mob-body" style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.7, flex: 1 }}>Real-time AI analysis of surveillance footage with natural language search. Powered by AIS — reduce 60 days of manual footage review to under a week.</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#888', textTransform: 'uppercase', marginTop: '12px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>Request Demo →</div>
+            </div>
 
           </div>
         </div>
