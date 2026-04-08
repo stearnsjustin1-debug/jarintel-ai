@@ -80,7 +80,7 @@ const ghostBtn = {
   width: '100%',
 }
 
-// ── PMP evaluation categories (Brian's template) ──────────────────────────────
+// ── PMP evaluation categories ─────────────────────────────────────────────────
 
 const NON_SUPERVISORY_CATEGORIES = [
   'Professional Knowledge and Knowledge Application',

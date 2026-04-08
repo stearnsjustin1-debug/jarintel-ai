@@ -257,7 +257,7 @@ export default function Solutions() {
                   style={inputStyle}
                   value={nameOrg}
                   onChange={e => setNameOrg(e.target.value)}
-                  placeholder="Brian Prescott · Hernando County Sheriff"
+                  placeholder="Sgt. John Smith · Metro Police Department"
                 />
               </div>
 
