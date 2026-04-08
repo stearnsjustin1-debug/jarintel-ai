@@ -119,173 +119,204 @@ const NAV_LOGO_PATHS = (
   </>
 )
 
-// ── Map component (client-only, no SSR) ──────────────────────────────────────
+// ── Map component (client-only, pure mapbox-gl, no react-map-gl) ─────────────
 
-const CrimeMap = dynamic(
-  async () => {
-    const { default: Map, Marker, Popup, Source, Layer } = await import('react-map-gl')
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
 
-    return function CrimeMapImpl({ incidents, viewState, onViewStateChange }) {
-      const [popupInfo, setPopupInfo] = useState(null)
-      const [showHeatmap, setShowHeatmap] = useState(false)
-      const [minHour, setMinHour] = useState(0)
-      const [maxHour, setMaxHour] = useState(24)
-
-  const filteredIncidents = incidents.filter(inc => {
-    const h = parseHour(inc.time)
-    if (h === null) return true
-    return h >= minHour && h <= maxHour
-  })
-
-  const heatmapData = {
+function buildGeoJSON(incidents) {
+  return {
     type: 'FeatureCollection',
-    features: filteredIncidents.map(inc => ({
+    features: incidents.map(inc => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [inc.lon, inc.lat] },
     })),
   }
+}
 
-  const heatmapLayer = {
-    id: 'heatmap-layer',
-    type: 'heatmap',
-    paint: {
-      'heatmap-weight': 1,
-      'heatmap-intensity': 1.5,
-      'heatmap-color': [
-        'interpolate', ['linear'], ['heatmap-density'],
-        0, 'rgba(0,0,0,0)',
-        0.2, 'rgba(59,130,246,0.4)',
-        0.5, 'rgba(249,115,22,0.6)',
-        0.8, 'rgba(239,68,68,0.8)',
-        1, 'rgba(239,68,68,1)',
-      ],
-      'heatmap-radius': 30,
-      'heatmap-opacity': 0.75,
-    },
-  }
+const CrimeMap = dynamic(
+  async () => {
+    const { default: mapboxgl } = await import('mapbox-gl')
 
-  const fmtHour = h => {
-    if (h === 0) return '12 AM'
-    if (h === 12) return '12 PM'
-    if (h === 24) return '12 AM'
-    return h < 12 ? `${h} AM` : `${h - 12} PM`
-  }
+    return function CrimeMapImpl({ incidents, viewState, onViewStateChange }) {
+      const containerRef = useRef(null)
+      const mapRef = useRef(null)
+      const markersRef = useRef([])
+      const [showHeatmap, setShowHeatmap] = useState(false)
+      const [minHour, setMinHour] = useState(0)
+      const [maxHour, setMaxHour] = useState(24)
 
-  return (
-    <div style={{ position: 'relative', width: '100%' }}>
+      const fmtHour = h => {
+        if (h === 0 || h === 24) return '12 AM'
+        if (h === 12) return '12 PM'
+        return h < 12 ? `${h} AM` : `${h - 12} PM`
+      }
 
-      {/* Map controls row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 0', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#555' }}>Heatmap</span>
-          <button
-            onClick={() => setShowHeatmap(h => !h)}
-            style={{
-              fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.15em', textTransform: 'uppercase',
-              color: showHeatmap ? '#fff' : '#555',
-              background: 'transparent',
-              border: `0.5px solid ${showHeatmap ? '#555' : '#222'}`,
-              padding: '5px 12px', cursor: 'pointer',
-            }}
-          >{showHeatmap ? 'On' : 'Off'}</button>
-        </div>
+      // Initialize map once on mount
+      useEffect(() => {
+        if (!containerRef.current || mapRef.current) return
+        mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '220px', maxWidth: '400px' }}>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#555', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>
-            {fmtHour(minHour)} – {fmtHour(maxHour)}
-          </span>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <input type="range" min={0} max={24} value={minHour}
-              onChange={e => setMinHour(Math.min(Number(e.target.value), maxHour - 1))}
-              style={{ width: '100%', accentColor: '#555' }}
-            />
-            <input type="range" min={0} max={24} value={maxHour}
-              onChange={e => setMaxHour(Math.max(Number(e.target.value), minHour + 1))}
-              style={{ width: '100%', accentColor: '#888' }}
-            />
-          </div>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#444', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
-            {filteredIncidents.length} shown
-          </span>
-        </div>
-      </div>
+        const map = new mapboxgl.Map({
+          container: containerRef.current,
+          style: 'mapbox://styles/mapbox/dark-v11',
+          center: [viewState.longitude, viewState.latitude],
+          zoom: viewState.zoom,
+        })
+        mapRef.current = map
 
-      {/* Map */}
-      <Map
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        longitude={viewState.longitude}
-        latitude={viewState.latitude}
-        zoom={viewState.zoom}
-        onMove={e => onViewStateChange(e.viewState)}
-        style={{ width: '100%', height: '560px' }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
-      >
-        {showHeatmap && (
-          <Source id="heatmap-src" type="geojson" data={heatmapData}>
-            <Layer {...heatmapLayer} />
-          </Source>
-        )}
+        map.on('move', () => {
+          const c = map.getCenter()
+          onViewStateChange({ longitude: c.lng, latitude: c.lat, zoom: map.getZoom() })
+        })
 
-        {!showHeatmap && filteredIncidents.map((inc, i) => (
-          <Marker
-            key={i}
-            longitude={inc.lon}
-            latitude={inc.lat}
-            anchor="center"
-            onClick={e => { e.originalEvent.stopPropagation(); setPopupInfo(inc) }}
-          >
-            <div style={{
-              width: '9px', height: '9px', borderRadius: '50%',
-              background: CRIME_COLORS[inc.category] || CRIME_COLORS.other,
-              border: '1.5px solid rgba(0,0,0,0.6)',
-              cursor: 'pointer',
-              boxShadow: `0 0 4px ${CRIME_COLORS[inc.category] || CRIME_COLORS.other}88`,
-            }} />
-          </Marker>
-        ))}
+        map.on('load', () => {
+          map.addSource('heatmap-src', { type: 'geojson', data: buildGeoJSON(incidents) })
+          map.addLayer({
+            id: 'heatmap-layer',
+            type: 'heatmap',
+            source: 'heatmap-src',
+            layout: { visibility: 'none' },
+            paint: {
+              'heatmap-weight': 1,
+              'heatmap-intensity': 1.5,
+              'heatmap-color': [
+                'interpolate', ['linear'], ['heatmap-density'],
+                0, 'rgba(0,0,0,0)',
+                0.2, 'rgba(59,130,246,0.4)',
+                0.5, 'rgba(249,115,22,0.6)',
+                0.8, 'rgba(239,68,68,0.8)',
+                1, 'rgba(239,68,68,1)',
+              ],
+              'heatmap-radius': 30,
+              'heatmap-opacity': 0.75,
+            },
+          })
+        })
 
-        {popupInfo && (
-          <Popup
-            longitude={popupInfo.lon}
-            latitude={popupInfo.lat}
-            anchor="bottom"
-            onClose={() => setPopupInfo(null)}
-            closeButton={true}
-            style={{ maxWidth: '260px' }}
-          >
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", background: '#0a0a0a', padding: '12px', fontSize: '11px', lineHeight: 1.7 }}>
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: CRIME_COLORS[popupInfo.category], marginBottom: '6px' }}>
-                {popupInfo.type || popupInfo.category}
-              </div>
-              <div style={{ color: '#bbb' }}>{popupInfo.address}</div>
-              {(popupInfo.date || popupInfo.time) && (
-                <div style={{ color: '#666', fontSize: '10px', marginTop: '4px' }}>
-                  {popupInfo.date}{popupInfo.date && popupInfo.time ? ' · ' : ''}{popupInfo.time}
+        return () => { map.remove(); mapRef.current = null }
+      }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+      // Rebuild markers when filter or incidents change
+      useEffect(() => {
+        const map = mapRef.current
+        if (!map) return
+
+        const rebuild = () => {
+          markersRef.current.forEach(m => m.remove())
+          markersRef.current = []
+
+          const filtered = incidents.filter(inc => {
+            const h = parseHour(inc.time)
+            return h === null || (h >= minHour && h <= maxHour)
+          })
+
+          filtered.forEach(inc => {
+            const color = CRIME_COLORS[inc.category] || CRIME_COLORS.other
+            const el = document.createElement('div')
+            el.style.cssText = `width:9px;height:9px;border-radius:50%;background:${color};border:1.5px solid rgba(0,0,0,0.6);cursor:pointer;box-shadow:0 0 4px ${color}88;display:${showHeatmap ? 'none' : 'block'}`
+
+            const popup = new mapboxgl.Popup({ offset: 10, maxWidth: '280px', className: 'jar-popup' })
+              .setHTML(`
+                <div class="jar-popup-inner">
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:${color};margin-bottom:6px">${escapeHtml(inc.type || inc.category)}</div>
+                  <div style="color:#bbb">${escapeHtml(inc.address)}</div>
+                  ${(inc.date || inc.time) ? `<div style="color:#666;font-size:10px;margin-top:4px">${escapeHtml(inc.date || '')}${inc.date && inc.time ? ' · ' : ''}${escapeHtml(inc.time || '')}</div>` : ''}
+                  ${inc.description ? `<div style="color:#555;font-size:10px;margin-top:6px;border-top:0.5px solid #1a1a1a;padding-top:6px">${escapeHtml(inc.description.slice(0, 140))}${inc.description.length > 140 ? '…' : ''}</div>` : ''}
                 </div>
-              )}
-              {popupInfo.description && (
-                <div style={{ color: '#555', fontSize: '10px', marginTop: '6px', borderTop: '0.5px solid #1a1a1a', paddingTop: '6px' }}>
-                  {popupInfo.description.slice(0, 140)}{popupInfo.description.length > 140 ? '…' : ''}
-                </div>
-              )}
+              `)
+
+            const marker = new mapboxgl.Marker({ element: el })
+              .setLngLat([inc.lon, inc.lat])
+              .setPopup(popup)
+              .addTo(map)
+            markersRef.current.push(marker)
+          })
+
+          // Update heatmap source
+          const src = map.getSource('heatmap-src')
+          if (src) src.setData(buildGeoJSON(filtered))
+        }
+
+        if (map.isStyleLoaded()) rebuild()
+        else map.once('load', rebuild)
+      }, [incidents, minHour, maxHour]) // eslint-disable-line react-hooks/exhaustive-deps
+
+      // Toggle heatmap layer + marker visibility
+      useEffect(() => {
+        const map = mapRef.current
+        if (!map) return
+        const toggle = () => {
+          if (map.getLayer('heatmap-layer')) {
+            map.setLayoutProperty('heatmap-layer', 'visibility', showHeatmap ? 'visible' : 'none')
+          }
+          markersRef.current.forEach(m => {
+            m.getElement().style.display = showHeatmap ? 'none' : 'block'
+          })
+        }
+        if (map.isStyleLoaded()) toggle()
+        else map.once('load', toggle)
+      }, [showHeatmap])
+
+      // Count for display
+      const shownCount = incidents.filter(inc => {
+        const h = parseHour(inc.time)
+        return h === null || (h >= minHour && h <= maxHour)
+      }).length
+
+      return (
+        <div style={{ position: 'relative', width: '100%' }}>
+
+          {/* Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 0', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#555' }}>Heatmap</span>
+              <button
+                onClick={() => setShowHeatmap(v => !v)}
+                style={{
+                  fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.15em', textTransform: 'uppercase',
+                  color: showHeatmap ? '#fff' : '#555', background: 'transparent',
+                  border: `0.5px solid ${showHeatmap ? '#555' : '#222'}`,
+                  padding: '5px 12px', cursor: 'pointer',
+                }}
+              >{showHeatmap ? 'On' : 'Off'}</button>
             </div>
-          </Popup>
-        )}
-      </Map>
 
-      {/* Legend */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', paddingTop: '10px' }}>
-        {Object.entries(CRIME_LABELS).map(([cat, label]) => (
-          <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: CRIME_COLORS[cat], flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#555', letterSpacing: '0.1em' }}>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '220px', maxWidth: '400px' }}>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#555', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>
+                {fmtHour(minHour)} – {fmtHour(maxHour)}
+              </span>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <input type="range" min={0} max={24} value={minHour}
+                  onChange={e => setMinHour(Math.min(Number(e.target.value), maxHour - 1))}
+                  style={{ width: '100%', accentColor: '#555' }} />
+                <input type="range" min={0} max={24} value={maxHour}
+                  onChange={e => setMaxHour(Math.max(Number(e.target.value), minHour + 1))}
+                  style={{ width: '100%', accentColor: '#888' }} />
+              </div>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#444', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
+                {shownCount} shown
+              </span>
+            </div>
           </div>
-        ))}
-      </div>
 
-    </div>
-    )
-  }
+          {/* Map container — mapbox-gl mounts here */}
+          <div ref={containerRef} style={{ width: '100%', height: '560px' }} />
+
+          {/* Legend */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', paddingTop: '10px' }}>
+            {Object.entries(CRIME_LABELS).map(([cat, label]) => (
+              <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: CRIME_COLORS[cat], flexShrink: 0 }} />
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#555', letterSpacing: '0.1em' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      )
+    }
   },
   {
     ssr: false,

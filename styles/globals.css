@@ -34,3 +34,28 @@ html, body {
   /* Readable body text */
   .mob-body { font-size: 14px !important; line-height: 1.8 !important; }
 }
+
+/* ── Mapbox popup dark theme ───────────────────────────────── */
+.jar-popup .mapboxgl-popup-content {
+  background: #0a0a0a !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: 0.5px solid #222 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+}
+.jar-popup .mapboxgl-popup-tip { display: none !important; }
+.jar-popup .mapboxgl-popup-close-button {
+  color: #555 !important;
+  font-size: 14px !important;
+  padding: 4px 8px !important;
+  line-height: 1 !important;
+  background: transparent !important;
+}
+.jar-popup .mapboxgl-popup-close-button:hover { color: #bbb !important; }
+.jar-popup-inner {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  padding: 12px;
+  min-width: 200px;
+}

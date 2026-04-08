@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['react-map-gl', 'mapbox-gl'],
+  transpilePackages: ['mapbox-gl'],
+  experimental: {
+    turbo: undefined,
+  },
+  webpack: (config) => {
+    config.resolve.alias = { ...config.resolve.alias, 'mapbox-gl': 'mapbox-gl' }
+    return config
+  },
 };
 
 export default nextConfig;
