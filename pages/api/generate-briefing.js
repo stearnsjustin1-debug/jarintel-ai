@@ -1,41 +1,56 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { supabaseAdmin } from '../../lib/supabase-admin'
+import { Resend } from 'resend'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 const MAX_INCIDENTS = 500
 
-// ── Usage logging ────────────────────────────────────────────────────────────
+// ── Usage logging + notification ─────────────────────────────────────────────
 
-async function logUsage(token, reportContent, jurisdictionName) {
-  console.log('[logUsage] crime-briefing: starting')
-  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
-  if (userError) { console.error('[logUsage] getUser error:', userError); return }
-  if (!user) { console.warn('[logUsage] no user for token'); return }
-  console.log('[logUsage] user:', user.email)
-
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('id')
-    .eq('email', user.email)
-    .single()
-
-  if (profileError) { console.error('[logUsage] profile fetch error:', profileError); return }
-  if (!profile) { console.warn('[logUsage] no profile for email:', user.email); return }
-  console.log('[logUsage] profile id:', profile.id)
+async function logAndNotify(userEmail, jurisdictionName, startDate, endDate, incidentCount, briefing) {
+  const reportContent = JSON.stringify(briefing)
 
   const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
-    user_id: profile.id,
     tool: 'crime-briefing',
     report_type: 'crime-briefing',
+    user_email: userEmail || null,
     report_content: reportContent || null,
     jurisdiction: jurisdictionName || null,
     created_at: new Date().toISOString(),
   })
-  if (insertError) {
-    console.error('[logUsage] insert error:', insertError)
-  } else {
-    console.log('[logUsage] crime-briefing: insert ok')
+  if (insertError) console.error('[logAndNotify] insert error:', insertError)
+  else console.log('[logAndNotify] crime-briefing: insert ok')
+
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const summaryPreview = briefing?.summary ? String(briefing.summary).slice(0, 800) : '—'
+      await resend.emails.send({
+        from: 'JAR Intelligence <noreply@jarintel.com>',
+        to: 'justin@jarintel.ai',
+        subject: `Crime Briefing Generated — ${jurisdictionName || 'Unknown Jurisdiction'}`,
+        html: `
+          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
+            <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
+            <div style="color:#666;font-size:11px;margin-bottom:24px;">Crime Intelligence Briefing Generated</div>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Jurisdiction</td><td style="padding:8px 0;color:#fff;font-size:12px;">${jurisdictionName || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Date Range</td><td style="padding:8px 0;color:#fff;font-size:12px;">${startDate || '—'} to ${endDate || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Incidents</td><td style="padding:8px 0;color:#fff;font-size:12px;">${incidentCount}</td></tr>
+            </table>
+            <div>
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Executive Summary</div>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${summaryPreview.replace(/</g, '&lt;')}</pre>
+            </div>
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">Sent from jarintel.ai · Crime Intelligence Briefing</div>
+          </div>
+        `,
+      })
+    } catch (err) {
+      console.error('[logAndNotify] Resend error:', err)
+    }
   }
 }
 
@@ -119,7 +134,7 @@ async function geocodeBatch(items, batchSize = 10) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { csvContent, jurisdiction, startDate, endDate } = req.body
+  const { csvContent, jurisdiction, startDate, endDate, userEmail } = req.body
   if (!csvContent || !jurisdiction) {
     return res.status(400).json({ error: 'CSV content and jurisdiction are required.' })
   }
@@ -230,11 +245,9 @@ Provide 3-6 hotspots, 4-5 patrol recommendations, and 2-5 notable incidents.`
       }
     }
 
-    // Log usage non-blocking — a logging failure must not affect the response
-    const authHeader = req.headers.authorization
-    if (authHeader?.startsWith('Bearer ')) {
-      logUsage(authHeader.slice(7), JSON.stringify(briefing), jurisdiction).catch(err => console.error('Usage log error:', err))
-    }
+    // Log and notify non-blocking — failures must not affect the response
+    logAndNotify(userEmail, jurisdiction, startDate, endDate, incidents.length, briefing)
+      .catch(err => console.error('logAndNotify error:', err))
 
     res.status(200).json({ incidents, briefing })
   } catch (err) {

@@ -307,6 +307,7 @@ export default function PerformanceReview() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Tool inputs
+  const [userEmail, setUserEmail] = useState('')
   const [employeeNames, setEmployeeNames] = useState('')
   const currentYear = new Date().getFullYear()
   const [evalStartDate, setEvalStartDate] = useState(`${currentYear}-01-01`)
@@ -343,6 +344,7 @@ export default function PerformanceReview() {
             .join('\n'),
           evalPeriod,
           nameMap: names,
+          userEmail,
         }),
       })
       const data = await res.json()
@@ -365,7 +367,7 @@ export default function PerformanceReview() {
   })()
 
   const names = employeeNames.split('\n').map(n => n.trim()).filter(Boolean)
-  const canGenerate = supervisorNotes.trim() && evalStartDate && evalEndDate && !loading
+  const canGenerate = userEmail.trim() && supervisorNotes.trim() && evalStartDate && evalEndDate && !loading
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -440,6 +442,21 @@ export default function PerformanceReview() {
           <div className="mob-pad" style={{ padding: '0 40px 100px', maxWidth: '960px', margin: '0 auto' }}>
 
             <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+              {/* Email capture */}
+              <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>
+                <div style={{ ...sectionHeadStyle, marginBottom: '16px' }}>// Your Information</div>
+                <label style={labelStyle}>Your Work Email</label>
+                <input
+                  className="mob-input"
+                  style={inputStyle}
+                  type="email"
+                  value={userEmail}
+                  onChange={e => setUserEmail(e.target.value)}
+                  placeholder="you@agency.gov"
+                  required
+                />
+              </div>
 
               {/* Anonymization */}
               <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>

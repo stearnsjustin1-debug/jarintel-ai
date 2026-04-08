@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   // Fetch logs that have report content
   const { data: logs, error: logsError } = await supabaseAdmin
     .from('usage_logs')
-    .select('id, user_id, tool, report_type, report_content, jurisdiction, created_at')
+    .select('id, user_id, user_email, tool, report_type, report_content, jurisdiction, created_at')
     .not('report_content', 'is', null)
     .order('created_at', { ascending: false })
     .limit(200)
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     return {
       id: log.id,
       created_at: log.created_at,
-      email: profile.email || '—',
+      email: log.user_email || profile.email || '—',
       agency: profile.agency || '—',
       tool: log.tool || log.report_type || '—',
       jurisdiction: log.jurisdiction || null,

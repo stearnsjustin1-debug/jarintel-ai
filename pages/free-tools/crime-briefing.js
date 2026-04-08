@@ -477,6 +477,7 @@ export default function CrimeBriefing() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Tool state
+  const [userEmail, setUserEmail] = useState('')
   const [csvContent, setCsvContent] = useState('')
   const [csvFileName, setCsvFileName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -522,7 +523,7 @@ export default function CrimeBriefing() {
       const res = await fetch('/api/generate-briefing', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ csvContent, jurisdiction, startDate, endDate }),
+        body: JSON.stringify({ csvContent, jurisdiction, startDate, endDate, userEmail }),
       })
       const data = await res.json()
       if (data.error) {
@@ -630,6 +631,20 @@ export default function CrimeBriefing() {
           <div className="mob-pad" style={{ padding: '0 40px 100px', maxWidth: '1200px', margin: '0 auto' }}>
 
             <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginBottom: '48px' }}>
+
+              {/* Email capture */}
+              <div>
+                <label style={labelStyle}>Your Work Email</label>
+                <input
+                  className="mob-input"
+                  style={inputStyle}
+                  type="email"
+                  value={userEmail}
+                  onChange={e => setUserEmail(e.target.value)}
+                  placeholder="you@agency.gov"
+                  required
+                />
+              </div>
 
               {/* CSV Upload */}
               <div>

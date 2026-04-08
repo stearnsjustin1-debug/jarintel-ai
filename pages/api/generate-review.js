@@ -1,43 +1,66 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { supabaseAdmin } from '../../lib/supabase-admin'
+import { Resend } from 'resend'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-async function logUsage(token, reportContent) {
-  console.log('[logUsage] performance-review: starting')
-  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
-  if (userError) { console.error('[logUsage] getUser error:', userError); return }
-  if (!user) { console.warn('[logUsage] no user for token'); return }
-  console.log('[logUsage] user:', user.email)
-
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('id')
-    .eq('email', user.email)
-    .single()
-
-  if (profileError) { console.error('[logUsage] profile fetch error:', profileError); return }
-  if (!profile) { console.warn('[logUsage] no profile for email:', user.email); return }
-  console.log('[logUsage] profile id:', profile.id)
-
+async function logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, reportContent) {
+  // Insert usage log
   const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
-    user_id: profile.id,
     tool: 'performance-review',
     report_type: 'performance-review',
+    user_email: userEmail || null,
     report_content: reportContent || null,
     created_at: new Date().toISOString(),
   })
-  if (insertError) {
-    console.error('[logUsage] insert error:', insertError)
-  } else {
-    console.log('[logUsage] performance-review: insert ok')
+  if (insertError) console.error('[logAndNotify] insert error:', insertError)
+  else console.log('[logAndNotify] performance-review: insert ok')
+
+  // Send notification email
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const nameMapHtml = nameMap && nameMap.length > 0
+        ? nameMap.map((n, i) => `<tr><td style="padding:4px 0;color:#888;font-size:11px;">${n}</td><td style="padding:4px 0;color:#fff;font-size:11px;">→ Employee ${String.fromCharCode(65 + i)}</td></tr>`).join('')
+        : '<tr><td colspan="2" style="color:#666;font-size:11px;">None</td></tr>'
+      await resend.emails.send({
+        from: 'JAR Intelligence <noreply@jarintel.com>',
+        to: 'justin@jarintel.ai',
+        subject: `Review Generated — ${evalPeriod || 'Unknown Period'}`,
+        html: `
+          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
+            <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
+            <div style="color:#666;font-size:11px;margin-bottom:24px;">Performance Review Generated</div>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Eval Period</td><td style="padding:8px 0;color:#fff;font-size:12px;">${evalPeriod || '—'}</td></tr>
+            </table>
+            <div style="margin-bottom:16px;">
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Anonymization Map</div>
+              <table style="border-collapse:collapse;">${nameMapHtml}</table>
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Supervisor Notes</div>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(supervisorNotes || '').replace(/</g, '&lt;')}</pre>
+            </div>
+            <div>
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Generated Review</div>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(reportContent || '').replace(/</g, '&lt;')}</pre>
+            </div>
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">Sent from jarintel.ai · Performance Review Engine</div>
+          </div>
+        `,
+      })
+    } catch (err) {
+      console.error('[logAndNotify] Resend error:', err)
+    }
   }
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { supervisorNotes, evalCategories, evalPeriod, nameMap } = req.body
+  const { supervisorNotes, evalCategories, evalPeriod, nameMap, userEmail } = req.body
 
   if (!supervisorNotes || !evalPeriod) {
     return res.status(400).json({ error: 'Missing required fields.' })
@@ -100,11 +123,9 @@ Write the full evaluation now. For each category produce the rating number, rati
       ]
     })
 
-    // Log usage non-blocking — a logging failure must not affect the response
-    const authHeader = req.headers.authorization
-    if (authHeader?.startsWith('Bearer ')) {
-      logUsage(authHeader.slice(7), message.content[0].text).catch(err => console.error('Usage log error:', err))
-    }
+    // Log and notify non-blocking — failures must not affect the response
+    logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, message.content[0].text)
+      .catch(err => console.error('logAndNotify error:', err))
 
     res.status(200).json({ review: message.content[0].text })
   } catch (err) {
