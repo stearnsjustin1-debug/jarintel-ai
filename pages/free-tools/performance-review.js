@@ -175,7 +175,9 @@ export default function PerformanceReview() {
   const [authState, setAuthState] = useState('loading')
   const [session, setSession] = useState(null)
   const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
   const [authError, setAuthError] = useState('')
+  const [signingIn, setSigningIn] = useState(false)
 
   // Request form
   const [reqName, setReqName] = useState('')
@@ -236,14 +238,12 @@ export default function PerformanceReview() {
     return () => clearTimeout(t)
   }, [authState])
 
-  // Effect 1: persistent auth listener + initial session restoration
+  // Auth listener: restore persisted session on page load and handle sign-in/out
   useEffect(() => {
     // `initialResolved` prevents double-execution between getSession() and
     // INITIAL_SESSION — whichever resolves first wins, the other is a no-op.
     let initialResolved = false
 
-    // getSession() is an explicit fallback. In supabase-js v2 it reads the
-    // stored session from localStorage and refreshes the token if needed.
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       if (initialResolved) return
       initialResolved = true
@@ -254,17 +254,13 @@ export default function PerformanceReview() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
         if (event === 'INITIAL_SESSION') {
-          // Fires on every page load with the persisted session (or null).
-          // This is the primary path for returning users after a redeploy.
           if (initialResolved) return
           initialResolved = true
           if (s) await checkApproval(s)
           else setAuthState('initial')
         } else if (event === 'SIGNED_IN') {
-          // Fires after a new magic link sign-in — not on session restoration.
           initialResolved = true
           await checkApproval(s)
-          router.replace('/free-tools/performance-review', undefined, { shallow: true })
         } else if (event === 'SIGNED_OUT') {
           initialResolved = false
           setAuthState('initial')
@@ -275,50 +271,23 @@ export default function PerformanceReview() {
     return () => subscription.unsubscribe()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Effect 2: exchange magic link token_hash if present in URL
-  useEffect(() => {
-    if (!router.isReady) return
-    const { token_hash, type, auth_error } = router.query
-
-    if (auth_error) {
-      setAuthError(decodeURIComponent(String(auth_error)))
-      setAuthState('initial')
-      return
-    }
-
-    if (token_hash && type) {
-      supabase.auth.verifyOtp({
-        token_hash: String(token_hash),
-        type: String(type),
-      }).then(({ error }) => {
-        if (error) {
-          setAuthError('Invalid or expired login link. Please request a new one.')
-          setAuthState('initial')
-        }
-        // onAuthStateChange (Effect 1) fires SIGNED_IN on success
-      })
-    }
-  }, [router.isReady]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleSendLink(e) {
+  async function handleSignIn(e) {
     e.preventDefault()
     setAuthError('')
-    const { error } = await supabase.auth.signInWithOtp({
+    setSigningIn(true)
+    const { error } = await supabase.auth.signInWithPassword({
       email: authEmail,
-      options: {
-        // Point directly at the app page, not the API callback.
-        // For the implicit flow Supabase appends #access_token=... as a URL
-        // fragment — server-side routes can't read fragments, so the token
-        // would be silently dropped on any server redirect. Landing directly
-        // on this page lets the Supabase client (detectSessionInUrl: true)
-        // process the fragment itself and fire onAuthStateChange(SIGNED_IN).
-        // For the OTP token_hash format Supabase sends ?token_hash=&type= as
-        // query params, which Effect 2 below picks up and calls verifyOtp().
-        emailRedirectTo: `${window.location.origin}/free-tools/performance-review`,
-      },
+      password: authPassword,
     })
-    if (error) setAuthError(error.message)
-    else setAuthState('link_sent')
+    setSigningIn(false)
+    if (error) {
+      setAuthError(
+        error.message === 'Invalid login credentials'
+          ? 'Incorrect email or password.'
+          : error.message
+      )
+    }
+    // On success onAuthStateChange fires SIGNED_IN → checkApproval
   }
 
   async function handleRequestAccess(e) {
@@ -477,9 +446,9 @@ export default function PerformanceReview() {
               <div style={{ background: '#000', padding: '36px' }}>
                 <div style={sectionHeadStyle}>// Sign In</div>
                 <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '24px' }}>
-                  Enter your approved email address to receive a login link.
+                  Enter your credentials below. Login details are sent to your email when access is approved.
                 </div>
-                <form onSubmit={handleSendLink} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
                     <label style={labelStyle}>Email Address</label>
                     <input
@@ -492,15 +461,31 @@ export default function PerformanceReview() {
                       required
                     />
                   </div>
+                  <div>
+                    <label style={labelStyle}>Password</label>
+                    <input
+                      className="mob-input"
+                      style={inputStyle}
+                      type="password"
+                      value={authPassword}
+                      onChange={e => { setAuthPassword(e.target.value); setAuthError('') }}
+                      placeholder="••••••••••••••••"
+                      required
+                    />
+                  </div>
                   {authError && (
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>
                       {authError}
                     </div>
                   )}
-                  <button type="submit" className="mob-touch" style={ghostBtn}
-                    onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
-                    onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
-                  >Send Login Link →</button>
+                  <button
+                    type="submit"
+                    className="mob-touch"
+                    disabled={signingIn}
+                    style={{ ...ghostBtn, color: signingIn ? '#444' : '#888', cursor: signingIn ? 'default' : 'pointer' }}
+                    onMouseEnter={e => { if (!signingIn) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
+                    onMouseLeave={e => { e.target.style.color = signingIn ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
+                  >{signingIn ? 'Signing in...' : 'Sign In →'}</button>
                 </form>
               </div>
 
@@ -545,24 +530,6 @@ export default function PerformanceReview() {
           </div>
         )}
 
-        {/* Link sent */}
-        {authState === 'link_sent' && (
-          <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '40px', maxWidth: '480px' }}>
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', marginBottom: '16px' }}>// Check Your Email</div>
-              <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '24px' }}>
-                A login link has been sent to <span style={{ color: '#fff' }}>{authEmail}</span>.<br />
-                Click the link in that email to continue. It expires in 1 hour.
-              </div>
-              <button
-                onClick={() => { setAuthState('initial'); setAuthError('') }}
-                style={{ ...ghostBtn, width: 'auto', padding: '10px 20px' }}
-                onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
-                onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
-              >← Use a different email</button>
-            </div>
-          </div>
-        )}
 
         {/* Pending approval */}
         {authState === 'pending' && (

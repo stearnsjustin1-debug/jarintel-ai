@@ -1,11 +1,16 @@
+import crypto from 'crypto'
 import { supabaseAdmin } from '../../lib/supabase-admin'
 import { Resend } from 'resend'
+
+function generatePassword() {
+  // 16-char alphanumeric, no ambiguous chars (0/O, 1/I/l)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  return Array.from({ length: 16 }, () => chars[crypto.randomInt(chars.length)]).join('')
+}
 
 async function sendNotification({ full_name, agency, email, role }) {
   const resend = new Resend(process.env.RESEND_API_KEY)
   await resend.emails.send({
-    // Requires jarintel.ai to be a verified sending domain in your Resend dashboard.
-    // Until then, swap this for your Resend onboarding address or a verified domain.
     from: 'JAR Intelligence <noreply@jarintel.ai>',
     to: 'mason@jarintel.ai',
     subject: 'New Access Request — JAR Intel',
@@ -33,19 +38,34 @@ export default async function handler(req, res) {
   const { email, full_name, agency, role } = req.body
   if (!email) return res.status(400).json({ error: 'Email is required.' })
 
-  const { error } = await supabaseAdmin
-    .from('profiles')
-    .insert({ email, full_name, agency, role, approved: false })
+  const password = generatePassword()
 
-  if (error) {
-    if (error.code === '23505') {
+  // Insert profile with temp_password stored in plain text until admin approves
+  const { error: insertError } = await supabaseAdmin
+    .from('profiles')
+    .insert({ email, full_name, agency, role, approved: false, temp_password: password })
+
+  if (insertError) {
+    if (insertError.code === '23505') {
       return res.status(200).json({ ok: true, existing: true })
     }
-    console.error('Access request insert error:', error)
+    console.error('Access request insert error:', insertError)
     return res.status(500).json({ error: 'Failed to submit request. Please try again.' })
   }
 
-  // Send notification email non-blocking — a mail failure must not affect the response
+  // Create auth user immediately so they can sign in once approved
+  const { error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  })
+
+  if (authError) {
+    // Log but don't fail — profile is saved and admin can still approve
+    console.error('Auth user creation error:', authError)
+  }
+
+  // Non-blocking admin notification
   if (process.env.RESEND_API_KEY) {
     sendNotification({ full_name, agency, email, role }).catch(err =>
       console.error('Resend notification error:', err)
