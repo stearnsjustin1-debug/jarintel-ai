@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../../lib/supabase'
+import { useState } from 'react'
+
 
 // ── Shared constants ────────────────────────────────────────────────────────
 
@@ -304,29 +304,7 @@ function downloadWordTemplate(categories, evalPeriod) {
 export default function PerformanceReview() {
   const router = useRouter()
 
-  // 'initial' | 'checking' | 'pending' | 'approved'
   const [menuOpen, setMenuOpen] = useState(false)
-  const [authState, setAuthState] = useState('initial')
-  const authStateRef = useRef('initial')
-  const [session, setSession] = useState(null)
-  const [authEmail, setAuthEmail] = useState('')
-  const [authPassword, setAuthPassword] = useState('')
-  const [authError, setAuthError] = useState('')
-  const [signingIn, setSigningIn] = useState(false)
-
-  const [showForgot, setShowForgot] = useState(false)
-  const [resetEmail, setResetEmail] = useState('')
-  const [resetSending, setResetSending] = useState(false)
-  const [resetSent, setResetSent] = useState(false)
-  const [resetError, setResetError] = useState('')
-
-  // Request form
-  const [reqName, setReqName] = useState('')
-  const [reqAgency, setReqAgency] = useState('')
-  const [reqEmail, setReqEmail] = useState('')
-  const [reqRole, setReqRole] = useState('')
-  const [reqSent, setReqSent] = useState(false)
-  const [reqError, setReqError] = useState('')
 
   // Tool inputs
   const [employeeNames, setEmployeeNames] = useState('')
@@ -345,181 +323,6 @@ export default function PerformanceReview() {
   const [loading, setLoading] = useState(false)
   const [apiError, setApiError] = useState('')
 
-  async function checkApproval(userSession) {
-    if (!userSession?.user?.email) {
-      setAuthState('initial')
-      return
-    }
-    setAuthState('checking')
-    setSession(userSession)
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('approved')
-        .eq('email', userSession.user.email)
-        .single()
-
-      if (error) {
-        // PGRST116 = no rows matched (profile not found → pending)
-        // Any other error → fall back to login so the user isn't stuck
-        console.error('Profile check error:', error.code, error.message)
-        setAuthState(error.code === 'PGRST116' ? 'pending' : 'initial')
-        return
-      }
-
-      setAuthState(profile?.approved ? 'approved' : 'pending')
-    } catch (err) {
-      console.error('checkApproval threw:', err)
-      setAuthState('initial')
-    }
-  }
-
-  // Keep ref in sync so the visibility handler always reads the latest value
-  // without needing to re-register the event listener on every state change.
-  useEffect(() => { authStateRef.current = authState }, [authState])
-
-  // Timeout fallback: if checking takes more than 5 s, drop back to the login
-  // form so the user is never permanently stuck on "Verifying access..."
-  useEffect(() => {
-    if (authState !== 'checking') return
-    const t = setTimeout(() => {
-      console.warn('checkApproval timed out — falling back to initial')
-      setAuthState('initial')
-    }, 5000)
-    return () => clearTimeout(t)
-  }, [authState])
-
-  // Auth listener: restore persisted session on page load, handle sign-in/out,
-  // and recover from apparent logout when the tab regains visibility.
-  useEffect(() => {
-    // `initialResolved` prevents double-execution between getSession() and
-    // INITIAL_SESSION — whichever resolves first wins, the other is a no-op.
-    let initialResolved = false
-
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (initialResolved) return
-      initialResolved = true
-      if (s) checkApproval(s)
-      else setAuthState('initial')
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, s) => {
-        if (event === 'INITIAL_SESSION') {
-          if (initialResolved) return
-          initialResolved = true
-          if (s) await checkApproval(s)
-          else setAuthState('initial')
-        } else if (event === 'SIGNED_IN') {
-          initialResolved = true
-          // Guard against double-call when handleSignIn already invoked checkApproval
-          const cur = authStateRef.current
-          if (cur !== 'approved' && cur !== 'pending' && cur !== 'checking') {
-            await checkApproval(s)
-          }
-        } else if (event === 'TOKEN_REFRESHED') {
-          if (s) setSession(s)
-        } else if (event === 'SIGNED_OUT') {
-          initialResolved = false
-          setAuthState('initial')
-          setSession(null)
-        }
-      }
-    )
-
-    // Browsers suspend JS timers while a tab is hidden, which can cause
-    // supabase-js to fire SIGNED_OUT even though the token is still valid in
-    // localStorage. On visibility restore, re-read the session and recover.
-    function handleVisibility() {
-      if (document.visibilityState !== 'visible') return
-      supabase.auth.getSession().then(({ data: { session: s } }) => {
-        const cur = authStateRef.current
-        if (s && cur !== 'approved' && cur !== 'pending' && cur !== 'checking') {
-          checkApproval(s)
-        } else if (s && (cur === 'approved' || cur === 'pending')) {
-          // Session refreshed in background — keep token current
-          setSession(s)
-        } else if (!s && (cur === 'approved' || cur === 'pending')) {
-          setAuthState('initial')
-          setSession(null)
-        }
-      })
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-
-    return () => {
-      subscription.unsubscribe()
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleSignIn(e) {
-    e.preventDefault()
-    setAuthError('')
-    setSigningIn(true)
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: authPassword,
-      })
-      if (error) {
-        setAuthError(
-          error.message === 'Invalid login credentials'
-            ? 'Incorrect email or password.'
-            : error.message
-        )
-        return
-      }
-      // Call checkApproval immediately with the returned session rather than
-      // waiting for onAuthStateChange SIGNED_IN, which can be delayed.
-      if (data?.session) await checkApproval(data.session)
-    } catch (err) {
-      console.error('handleSignIn error:', err)
-      setAuthError('Sign-in failed. Please check your connection and try again.')
-    } finally {
-      setSigningIn(false)
-    }
-  }
-
-  async function handleResetPassword(e) {
-    e.preventDefault()
-    setResetError('')
-    setResetSending(true)
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) {
-        setResetSent(true)
-      } else {
-        setResetError(data.error || 'Failed to send reset. Please try again.')
-      }
-    } catch {
-      setResetError('Request failed. Please check your connection and try again.')
-    } finally {
-      setResetSending(false)
-    }
-  }
-
-  async function handleRequestAccess(e) {
-    e.preventDefault()
-    setReqError('')
-    const res = await fetch('/api/access-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: reqEmail, full_name: reqName, agency: reqAgency, role: reqRole }),
-    })
-    if (res.ok) {
-      setReqSent(true)
-    } else {
-      const data = await res.json().catch(() => ({}))
-      setReqError(data.error || 'Failed to submit. Please try again.')
-    }
-  }
-
   async function handleGenerate(e) {
     e.preventDefault()
     setLoading(true)
@@ -529,7 +332,6 @@ export default function PerformanceReview() {
     const names = employeeNames.split('\n').map(n => n.trim()).filter(Boolean)
     try {
       const headers = { 'Content-Type': 'application/json' }
-      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
       const res = await fetch('/api/generate-review', {
         method: 'POST',
@@ -593,13 +395,6 @@ export default function PerformanceReview() {
                     onMouseLeave={e => e.target.style.color = '#888'}
                   >{item}</span>
                 ))}
-                {(authState === 'approved' || authState === 'pending') && (
-                  <span onClick={() => supabase.auth.signOut()}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', cursor: 'pointer' }}
-                    onMouseEnter={e => e.target.style.color = '#888'}
-                    onMouseLeave={e => e.target.style.color = '#555'}
-                  >Sign Out</span>
-                )}
               </div>
               <button
                 className="mob-hamburger"
@@ -621,12 +416,6 @@ export default function PerformanceReview() {
                   style={{ fontFamily: "'Space Mono', monospace", fontSize: '13px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', padding: '16px 20px', cursor: 'pointer', borderBottom: '0.5px solid #111', display: 'block' }}
                 >{item}</span>
               ))}
-              {(authState === 'approved' || authState === 'pending') && (
-                <span
-                  onClick={() => { setMenuOpen(false); supabase.auth.signOut() }}
-                  style={{ fontFamily: "'Space Mono', monospace", fontSize: '13px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', padding: '16px 20px', cursor: 'pointer', display: 'block' }}
-                >Sign Out</span>
-              )}
             </div>
           )}
         </nav>
@@ -646,201 +435,9 @@ export default function PerformanceReview() {
           <div style={{ width: '100%', height: '0.5px', background: '#1a1a1a', marginBottom: '56px' }} />
         </div>
 
-        {/* ── AUTH STATES ──────────────────────────────────────────────────── */}
+        {/* ── REVIEW TOOL ──────────────────────────────────────────────────── */}
 
-        {/* Loading */}
-        {authState === 'loading' && (
-          <div className="mob-pad" style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#444' }}>Initializing...</div>
-          </div>
-        )}
-
-        {/* Checking approval */}
-        {authState === 'checking' && (
-          <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#666' }}>Verifying access...</div>
-          </div>
-        )}
-
-        {/* Login + Request Access gate */}
-        {authState === 'initial' && (
-          <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
-            <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
-
-              {/* Sign In / Forgot Password */}
-              <div style={{ background: '#000', padding: '36px' }}>
-                {showForgot ? (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
-                      <span
-                        onClick={() => { setShowForgot(false); setResetSent(false); setResetError('') }}
-                        style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#444', cursor: 'pointer' }}
-                        onMouseEnter={e => e.target.style.color = '#888'}
-                        onMouseLeave={e => e.target.style.color = '#444'}
-                      >← Back</span>
-                      <div style={sectionHeadStyle}>// Reset Password</div>
-                    </div>
-                    {resetSent ? (
-                      <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9 }}>
-                        <span style={{ color: '#fff' }}>New credentials sent to your email.</span><br />
-                        Check your inbox for updated login instructions.
-                      </div>
-                    ) : (
-                      <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '4px' }}>
-                          Enter your email address and we'll send new credentials.
-                        </div>
-                        <div>
-                          <label style={labelStyle}>Email Address</label>
-                          <input
-                            className="mob-input"
-                            style={inputStyle}
-                            type="email"
-                            value={resetEmail}
-                            onChange={e => { setResetEmail(e.target.value); setResetError('') }}
-                            placeholder="you@agency.gov"
-                            required
-                          />
-                        </div>
-                        {resetError && (
-                          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>
-                            {resetError}
-                          </div>
-                        )}
-                        <button
-                          type="submit"
-                          className="mob-touch"
-                          disabled={resetSending}
-                          style={{ ...ghostBtn, color: resetSending ? '#444' : '#888', cursor: resetSending ? 'default' : 'pointer' }}
-                          onMouseEnter={e => { if (!resetSending) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
-                          onMouseLeave={e => { e.target.style.color = resetSending ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
-                        >{resetSending ? 'Sending...' : 'Send Reset Link →'}</button>
-                      </form>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div style={sectionHeadStyle}>// Sign In</div>
-                    <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9, marginBottom: '24px' }}>
-                      Enter your credentials below. Login details are sent to your email when access is approved.
-                    </div>
-                    <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div>
-                        <label style={labelStyle}>Email Address</label>
-                        <input
-                          className="mob-input"
-                          style={inputStyle}
-                          type="email"
-                          value={authEmail}
-                          onChange={e => { setAuthEmail(e.target.value); setAuthError('') }}
-                          placeholder="you@agency.gov"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>Password</label>
-                        <input
-                          className="mob-input"
-                          style={inputStyle}
-                          type="password"
-                          value={authPassword}
-                          onChange={e => { setAuthPassword(e.target.value); setAuthError('') }}
-                          placeholder="••••••••••••••••"
-                          required
-                        />
-                      </div>
-                      {authError && (
-                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>
-                          {authError}
-                        </div>
-                      )}
-                      <button
-                        type="submit"
-                        className="mob-touch"
-                        disabled={signingIn}
-                        style={{ ...ghostBtn, color: signingIn ? '#444' : '#888', cursor: signingIn ? 'default' : 'pointer' }}
-                        onMouseEnter={e => { if (!signingIn) { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' } }}
-                        onMouseLeave={e => { e.target.style.color = signingIn ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
-                      >{signingIn ? 'Signing in...' : 'Sign In →'}</button>
-                      <span
-                        onClick={() => { setShowForgot(true); setResetEmail(authEmail); setAuthError('') }}
-                        style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#444', cursor: 'pointer', textAlign: 'center', paddingTop: '4px' }}
-                        onMouseEnter={e => e.target.style.color = '#888'}
-                        onMouseLeave={e => e.target.style.color = '#444'}
-                      >Forgot your password?</span>
-                    </form>
-                  </>
-                )}
-              </div>
-
-              {/* Request Access */}
-              <div style={{ background: '#000', padding: '36px' }}>
-                <div style={sectionHeadStyle}>// Request Access</div>
-                {reqSent ? (
-                  <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9 }}>
-                    <span style={{ color: '#fff' }}>Request received.</span><br />
-                    We'll review your submission and send login instructions to the email provided. Typically same-day for verified agencies.
-                  </div>
-                ) : (
-                  <form onSubmit={handleRequestAccess} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div>
-                      <label style={labelStyle}>Full Name</label>
-                      <input style={inputStyle} value={reqName} onChange={e => setReqName(e.target.value)} placeholder="Sgt. John Smith" required />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Agency / Department</label>
-                      <input style={inputStyle} value={reqAgency} onChange={e => setReqAgency(e.target.value)} placeholder="Metro Police Department" required />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Work Email</label>
-                      <input style={inputStyle} type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} placeholder="j.smith@metropd.gov" required />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Role / Rank</label>
-                      <input style={inputStyle} value={reqRole} onChange={e => setReqRole(e.target.value)} placeholder="Patrol Sergeant, Shift Supervisor" required />
-                    </div>
-                    {reqError && (
-                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: '#c44', textTransform: 'uppercase' }}>{reqError}</div>
-                    )}
-                    <button type="submit" className="mob-touch" style={ghostBtn}
-                      onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
-                      onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
-                    >Send Request →</button>
-                  </form>
-                )}
-              </div>
-
-            </div>
-          </div>
-        )}
-
-
-        {/* Pending approval */}
-        {authState === 'pending' && (
-          <div style={{ padding: '0 40px 80px', maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '40px', maxWidth: '480px' }}>
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', marginBottom: '16px' }}>// Access Pending</div>
-              <div style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.9 }}>
-                Your request is pending approval.<br />
-                Signed in as <span style={{ color: '#fff' }}>{session?.user?.email}</span>.<br /><br />
-                You'll receive a notification once access is granted. Typically same-day for verified agencies.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── REVIEW TOOL (approved) ────────────────────────────────────────── */}
-
-        {authState === 'approved' && (
           <div className="mob-pad" style={{ padding: '0 40px 100px', maxWidth: '960px', margin: '0 auto' }}>
-
-            {/* Access badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2a6a2a' }} />
-              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#2a6a2a' }}>
-                Access Granted — {session?.user?.email}
-              </span>
-            </div>
 
             <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
@@ -1135,7 +732,6 @@ export default function PerformanceReview() {
             )}
 
           </div>
-        )}
 
         {/* FOOTER */}
         <div style={{ borderTop: '0.5px solid #111', padding: '24px 40px', textAlign: 'center' }}>
