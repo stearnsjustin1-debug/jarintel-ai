@@ -4,7 +4,7 @@ import { Resend } from 'resend'
 async function sendApprovalEmail({ email, password }) {
   const resend = new Resend(process.env.RESEND_API_KEY)
   await resend.emails.send({
-    from: 'JAR Intelligence <onboarding@resend.dev>',
+    from: 'JAR Intelligence <noreply@jarintel.com>',
     to: email,
     subject: 'Your JAR Intelligence Access is Approved',
     html: `

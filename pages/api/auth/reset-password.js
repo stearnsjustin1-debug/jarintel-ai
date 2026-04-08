@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
-        from: 'JAR Intelligence <onboarding@resend.dev>',
+        from: 'JAR Intelligence <noreply@jarintel.com>',
         to: email,
         subject: 'Your New JAR Intelligence Login Credentials',
         html: `
