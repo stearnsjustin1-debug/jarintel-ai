@@ -59,6 +59,29 @@ export default function Admin() {
   const [approving, setApproving] = useState(new Set())
   const [approveErrors, setApproveErrors] = useState({})
 
+  const [usageUsers, setUsageUsers] = useState([])
+  const [toolTotals, setToolTotals] = useState({})
+  const [totalGenerations, setTotalGenerations] = useState(0)
+  const [loadingUsage, setLoadingUsage] = useState(false)
+
+  async function fetchUsage(pw) {
+    setLoadingUsage(true)
+    try {
+      const res = await fetch('/api/admin/usage', {
+        headers: { 'x-admin-password': pw },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setUsageUsers(data.users ?? [])
+      setToolTotals(data.tool_totals ?? {})
+      setTotalGenerations(data.total_generations ?? 0)
+    } catch (err) {
+      console.error('Usage fetch error:', err)
+    } finally {
+      setLoadingUsage(false)
+    }
+  }
+
   async function fetchProfiles(pw) {
     setLoadingProfiles(true)
     setFetchError('')
@@ -79,6 +102,7 @@ export default function Admin() {
     } finally {
       setLoadingProfiles(false)
     }
+    fetchUsage(pw)
   }
 
   async function handleSignIn(e) {
@@ -98,6 +122,7 @@ export default function Admin() {
     const data = await res.json()
     setProfiles(data.profiles ?? [])
     setAuthed(true)
+    fetchUsage(password)
   }
 
   async function handleApprove(email) {
@@ -124,6 +149,7 @@ export default function Admin() {
 
   const pending = profiles.filter(p => !p.approved)
   const approved = profiles.filter(p => p.approved)
+  const usageByEmail = Object.fromEntries(usageUsers.map(u => [u.email, u]))
 
   return (
     <>
@@ -243,6 +269,7 @@ export default function Admin() {
                   approving={approving}
                   approveErrors={approveErrors}
                   onApprove={handleApprove}
+                  usageByEmail={usageByEmail}
                   thStyle={thStyle}
                   tdStyle={tdStyle}
                 />
@@ -260,6 +287,7 @@ export default function Admin() {
                   approving={approving}
                   approveErrors={approveErrors}
                   onApprove={handleApprove}
+                  usageByEmail={usageByEmail}
                   thStyle={thStyle}
                   tdStyle={tdStyle}
                 />
@@ -270,6 +298,75 @@ export default function Admin() {
               <div style={{ fontSize: '11px', color: '#444', lineHeight: 1.8 }}>No access requests yet.</div>
             )}
 
+            {/* ── USAGE SUMMARY ──────────────────────────────────────────── */}
+            <div style={{ marginTop: '64px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888' }}>
+                  // Usage Analytics
+                </div>
+                {loadingUsage && (
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#444', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Loading...</span>
+                )}
+              </div>
+
+              {/* Tool totals */}
+              <div style={{ display: 'flex', gap: '1px', background: '#1a1a1a', marginBottom: '32px', flexWrap: 'wrap' }}>
+                <div style={{ background: '#000', padding: '20px 28px', minWidth: '160px' }}>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#666', marginBottom: '8px' }}>Total Generations</div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff' }}>{totalGenerations}</div>
+                </div>
+                {Object.entries(toolTotals).map(([tool, count]) => (
+                  <div key={tool} style={{ background: '#000', padding: '20px 28px', minWidth: '160px' }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#666', marginBottom: '8px' }}>{tool}</div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff' }}>{count}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Per-user usage table */}
+              {usageUsers.length > 0 && (
+                <div style={{ overflowX: 'auto', border: '0.5px solid #1a1a1a' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '680px' }}>
+                    <thead>
+                      <tr style={{ background: '#080808' }}>
+                        <th style={thStyle}>Email</th>
+                        <th style={thStyle}>Agency</th>
+                        <th style={thStyle}>Total</th>
+                        {Object.keys(toolTotals).map(tool => (
+                          <th key={tool} style={thStyle}>{tool}</th>
+                        ))}
+                        <th style={thStyle}>Last Active</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usageUsers.map(u => (
+                        <tr key={u.email} style={{ background: '#000' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#0a0a0a'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#000'}
+                        >
+                          <td style={tdStyle}>{u.email}</td>
+                          <td style={{ ...tdStyle, color: u.agency ? '#bbb' : '#444' }}>{u.agency || '—'}</td>
+                          <td style={{ ...tdStyle, fontFamily: "'Space Mono', monospace", color: '#fff', fontWeight: 700 }}>{u.total}</td>
+                          {Object.keys(toolTotals).map(tool => (
+                            <td key={tool} style={{ ...tdStyle, color: '#888' }}>{u.by_tool[tool] ?? 0}</td>
+                          ))}
+                          <td style={{ ...tdStyle, color: '#666', fontSize: '10px' }}>
+                            {u.last_active
+                              ? new Date(u.last_active).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {!loadingUsage && usageUsers.length === 0 && (
+                <div style={{ fontSize: '11px', color: '#444' }}>No usage data yet.</div>
+              )}
+            </div>
+
           </div>
         )}
 
@@ -278,10 +375,10 @@ export default function Admin() {
   )
 }
 
-function ProfileTable({ rows, approving, approveErrors, onApprove, thStyle, tdStyle }) {
+function ProfileTable({ rows, approving, approveErrors, onApprove, usageByEmail = {}, thStyle, tdStyle }) {
   return (
     <div style={{ overflowX: 'auto', border: '0.5px solid #1a1a1a' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '720px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
         <thead>
           <tr style={{ background: '#080808' }}>
             <th style={thStyle}>Email</th>
@@ -290,49 +387,56 @@ function ProfileTable({ rows, approving, approveErrors, onApprove, thStyle, tdSt
             <th style={thStyle}>Role</th>
             <th style={thStyle}>Status</th>
             <th style={thStyle}>Joined</th>
+            <th style={thStyle}>Usage</th>
             <th style={thStyle}>Action</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(p => (
-            <tr key={p.id} style={{ background: '#000' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#0a0a0a'}
-              onMouseLeave={e => e.currentTarget.style.background = '#000'}
-            >
-              <td style={tdStyle}>{p.email}</td>
-              <td style={{ ...tdStyle, color: p.full_name ? '#bbb' : '#444' }}>{p.full_name || '—'}</td>
-              <td style={{ ...tdStyle, color: p.agency ? '#bbb' : '#444' }}>{p.agency || '—'}</td>
-              <td style={{ ...tdStyle, color: p.role ? '#bbb' : '#444' }}>{p.role || '—'}</td>
-              <td style={tdStyle}>
-                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: p.approved ? '#2a6a2a' : '#666' }}>
-                  {p.approved ? 'Approved' : 'Pending'}
-                </span>
-              </td>
-              <td style={{ ...tdStyle, color: '#666', fontSize: '10px' }}>
-                {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </td>
-              <td style={tdStyle}>
-                {!p.approved && (
-                  <div>
-                    <button
-                      onClick={() => onApprove(p.email)}
-                      disabled={approving.has(p.email)}
-                      style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: approving.has(p.email) ? '#444' : '#888', background: 'transparent', border: '0.5px solid #333', padding: '6px 14px', cursor: approving.has(p.email) ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
-                      onMouseEnter={e => { if (!approving.has(p.email)) { e.target.style.color = '#fff'; e.target.style.borderColor = '#666' } }}
-                      onMouseLeave={e => { e.target.style.color = approving.has(p.email) ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
-                    >
-                      {approving.has(p.email) ? 'Approving...' : 'Approve →'}
-                    </button>
-                    {approveErrors[p.email] && (
-                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#c44', marginTop: '4px' }}>
-                        {approveErrors[p.email]}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </td>
-            </tr>
-          ))}
+          {rows.map(p => {
+            const u = usageByEmail[p.email]
+            return (
+              <tr key={p.id} style={{ background: '#000' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#0a0a0a'}
+                onMouseLeave={e => e.currentTarget.style.background = '#000'}
+              >
+                <td style={tdStyle}>{p.email}</td>
+                <td style={{ ...tdStyle, color: p.full_name ? '#bbb' : '#444' }}>{p.full_name || '—'}</td>
+                <td style={{ ...tdStyle, color: p.agency ? '#bbb' : '#444' }}>{p.agency || '—'}</td>
+                <td style={{ ...tdStyle, color: p.role ? '#bbb' : '#444' }}>{p.role || '—'}</td>
+                <td style={tdStyle}>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: p.approved ? '#2a6a2a' : '#666' }}>
+                    {p.approved ? 'Approved' : 'Pending'}
+                  </span>
+                </td>
+                <td style={{ ...tdStyle, color: '#666', fontSize: '10px' }}>
+                  {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </td>
+                <td style={{ ...tdStyle, fontFamily: "'Space Mono', monospace", color: u ? '#fff' : '#444', fontWeight: u ? 700 : 400 }}>
+                  {u ? u.total : '0'}
+                </td>
+                <td style={tdStyle}>
+                  {!p.approved && (
+                    <div>
+                      <button
+                        onClick={() => onApprove(p.email)}
+                        disabled={approving.has(p.email)}
+                        style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: approving.has(p.email) ? '#444' : '#888', background: 'transparent', border: '0.5px solid #333', padding: '6px 14px', cursor: approving.has(p.email) ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                        onMouseEnter={e => { if (!approving.has(p.email)) { e.target.style.color = '#fff'; e.target.style.borderColor = '#666' } }}
+                        onMouseLeave={e => { e.target.style.color = approving.has(p.email) ? '#444' : '#888'; e.target.style.borderColor = '#333' }}
+                      >
+                        {approving.has(p.email) ? 'Approving...' : 'Approve →'}
+                      </button>
+                      {approveErrors[p.email] && (
+                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#c44', marginTop: '4px' }}>
+                          {approveErrors[p.email]}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

@@ -4,20 +4,31 @@ import { supabaseAdmin } from '../../lib/supabase-admin'
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 async function logUsage(token) {
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-  if (!user) return
+  console.log('[logUsage] performance-review: starting')
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+  if (userError) { console.error('[logUsage] getUser error:', userError); return }
+  if (!user) { console.warn('[logUsage] no user for token'); return }
+  console.log('[logUsage] user:', user.email)
 
-  const { data: profile } = await supabaseAdmin
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('id')
     .eq('email', user.email)
     .single()
 
-  if (profile) {
-    await supabaseAdmin.from('usage_logs').insert({
-      user_id: profile.id,
-      tool: 'performance-review',
-    })
+  if (profileError) { console.error('[logUsage] profile fetch error:', profileError); return }
+  if (!profile) { console.warn('[logUsage] no profile for email:', user.email); return }
+  console.log('[logUsage] profile id:', profile.id)
+
+  const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
+    user_id: profile.id,
+    tool: 'performance-review',
+    created_at: new Date().toISOString(),
+  })
+  if (insertError) {
+    console.error('[logUsage] insert error:', insertError)
+  } else {
+    console.log('[logUsage] performance-review: insert ok')
   }
 }
 
