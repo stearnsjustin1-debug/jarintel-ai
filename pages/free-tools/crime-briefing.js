@@ -390,14 +390,14 @@ async function downloadPDF(output, jurisdiction, startDate, endDate) {
     } catch {}
   }
 
-  // Normalize a briefing field to a plain string, stripping any residual JSON syntax
-  const normField = val => {
+  // Normalize a briefing field to a plain string — key-aware so JSON dump is correctly split
+  const normField = (val, key) => {
     if (!val) return ''
     const s = typeof val === 'string' ? val : JSON.stringify(val)
-    // If it still looks like a JSON object, try to extract just readable text
     if (s.trimStart().startsWith('{')) {
       try {
         const parsed = JSON.parse(s)
+        if (key && parsed[key]) return String(parsed[key])
         return Object.values(parsed).filter(v => typeof v === 'string').join('\n\n')
       } catch { /* fall through */ }
     }
@@ -406,11 +406,11 @@ async function downloadPDF(output, jurisdiction, startDate, endDate) {
 
   // Briefing sections
   const sections = [
-    { title: 'Executive Summary', text: normField(output.briefing.summary) },
-    { title: 'Geographic Hot Spots', text: normField(output.briefing.hotspots) },
-    { title: 'Temporal Patterns', text: normField(output.briefing.timePatterns) },
-    { title: 'Patrol Recommendations', text: normField(output.briefing.patrolRecommendations) },
-    { title: 'Notable Incidents', text: normField(output.briefing.notableIncidents) },
+    { title: 'Executive Summary', text: normField(output.briefing.summary, 'summary') },
+    { title: 'Geographic Hot Spots', text: normField(output.briefing.hotspots, 'hotspots') },
+    { title: 'Temporal Patterns', text: normField(output.briefing.timePatterns, 'timePatterns') },
+    { title: 'Patrol Recommendations', text: normField(output.briefing.patrolRecommendations, 'patrolRecommendations') },
+    { title: 'Notable Incidents', text: normField(output.briefing.notableIncidents, 'notableIncidents') },
   ]
 
   const contentWidth = pageWidth - margin * 2
@@ -636,7 +636,24 @@ export default function CrimeBriefing() {
       if (data.error) {
         setApiError(data.error)
       } else {
-        setOutput(data)
+        // Repair: if API JSON.parse failed, the full Claude response may have landed in summary
+        let briefing = data.briefing || {}
+        if (briefing.summary && !briefing.hotspots && !briefing.timePatterns) {
+          const s = String(briefing.summary).trim()
+          if (s.startsWith('{')) {
+            try {
+              const reparsed = JSON.parse(s)
+              if (reparsed.summary) briefing = {
+                summary: String(reparsed.summary || ''),
+                hotspots: String(reparsed.hotspots || ''),
+                timePatterns: String(reparsed.timePatterns || ''),
+                patrolRecommendations: String(reparsed.patrolRecommendations || ''),
+                notableIncidents: String(reparsed.notableIncidents || ''),
+              }
+            } catch {}
+          }
+        }
+        setOutput({ incidents: data.incidents, briefing })
         setViewState(computeViewport(data.incidents))
       }
     } catch {

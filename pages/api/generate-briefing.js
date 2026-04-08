@@ -172,9 +172,21 @@ Return a JSON object with exactly this structure — no preamble, no markdown, j
         notableIncidents: String(parsed.notableIncidents || ''),
       }
     } catch {
-      // JSON parse failed — treat the entire response as the summary
+      // JSON parse failed — try regex field extraction before falling back to raw dump
       const raw = message.content[0].text.trim()
-      briefing = { summary: raw, hotspots: '', timePatterns: '', patrolRecommendations: '', notableIncidents: '' }
+      const extractField = key => {
+        const m = raw.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\[\\s\\S])*)"`, 's'))
+        if (!m) return ''
+        return m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+      }
+      const s = extractField('summary')
+      briefing = {
+        summary: s || raw,
+        hotspots: extractField('hotspots'),
+        timePatterns: extractField('timePatterns'),
+        patrolRecommendations: extractField('patrolRecommendations'),
+        notableIncidents: extractField('notableIncidents'),
+      }
     }
 
     res.status(200).json({ incidents, briefing })
