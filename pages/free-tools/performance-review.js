@@ -193,19 +193,42 @@ async function generatePDF(reviewText, evalPeriod) {
     }
     if (line.trim() === '') { y += 3.5; continue }
 
-    const isSectionHead = /^[A-Z][A-Z\s]{3,}:?\s*$/.test(line.trim())
+    // Horizontal rule: --- becomes a thin line with spacing
+    if (/^-{3,}\s*$/.test(line.trim())) {
+      y += 3
+      if (y > pageHeight - 22) { doc.addPage(); drawWatermark(); drawFooter(); y = margin + 12 }
+      doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.25)
+      doc.line(margin, y, pageWidth - margin, y)
+      y += 5
+      continue
+    }
+
+    // Markdown headings: ##, ###, # → section header style
+    const headingMatch = line.match(/^#{1,3}\s+(.+)/)
+    // ALL-CAPS section header fallback (original heuristic)
+    const isSectionHead = headingMatch || /^[A-Z][A-Z\s]{3,}:?\s*$/.test(line.trim())
+
     if (isSectionHead) {
+      const headText = headingMatch
+        ? headingMatch[1].replace(/\*\*/g, '').replace(/\*/g, '').trim()
+        : line.trim()
       y += 5
       if (y > pageHeight - 22) { doc.addPage(); drawWatermark(); drawFooter(); y = margin + 12 }
       doc.setFont('courier', 'bold'); doc.setFontSize(10); doc.setTextColor(0, 0, 0)
-      doc.text(line.trim(), margin, y)
+      doc.text(headText, margin, y)
       y += 1.5
       doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.25)
-      doc.line(margin, y, margin + doc.getTextWidth(line.trim()) + 1, y)
+      doc.line(margin, y, margin + doc.getTextWidth(headText) + 1, y)
       y += 5.5
     } else {
+      // Strip inline markdown: **bold**, *italic*, remaining * _ markers
+      const cleaned = line.trim()
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/_(.*?)_/g, '$1')
+        .replace(/[*_`]/g, '')
       doc.setFont('courier', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20)
-      for (const wl of doc.splitTextToSize(line.trim(), contentWidth)) {
+      for (const wl of doc.splitTextToSize(cleaned, contentWidth)) {
         if (y > pageHeight - 22) { doc.addPage(); drawWatermark(); drawFooter(); y = margin + 12 }
         doc.text(wl, margin, y); y += 5
       }
