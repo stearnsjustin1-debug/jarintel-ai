@@ -105,6 +105,19 @@ export default function FreeTools() {
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#888', textTransform: 'uppercase', marginTop: '12px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>Request Access →</div>
             </div>
 
+            {/* ACTIVE CARD — Crime Intelligence Briefing */}
+            <div
+              onClick={() => router.push('/free-tools/crime-briefing')}
+              style={{ background: '#000', padding: '30px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#0f0f0f'}
+              onMouseLeave={e => e.currentTarget.style.background = '#000'}
+            >
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#888', textTransform: 'uppercase' }}>// Law Enforcement · Intelligence</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Crime Intelligence Briefing</div>
+              <div className="mob-body" style={{ fontSize: '11px', color: '#bbb', lineHeight: 1.7, flex: 1 }}>Upload a CAD or RMS export. AI geocodes incidents onto an interactive dark map, identifies hot spots and time patterns, and generates a command-ready intelligence briefing.</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#888', textTransform: 'uppercase', marginTop: '12px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>Request Access →</div>
+            </div>
+
             {/* COMING SOON */}
             {['Video Intelligence'].map((name) => (
               <div key={name} style={{ background: '#000', padding: '30px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px', opacity: 0.3 }}>
