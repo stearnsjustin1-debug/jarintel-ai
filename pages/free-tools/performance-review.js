@@ -386,22 +386,28 @@ export default function PerformanceReview() {
     e.preventDefault()
     setAuthError('')
     setSigningIn(true)
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: authEmail,
-      password: authPassword,
-    })
-    setSigningIn(false)
-    if (error) {
-      setAuthError(
-        error.message === 'Invalid login credentials'
-          ? 'Incorrect email or password.'
-          : error.message
-      )
-      return
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: authPassword,
+      })
+      if (error) {
+        setAuthError(
+          error.message === 'Invalid login credentials'
+            ? 'Incorrect email or password.'
+            : error.message
+        )
+        return
+      }
+      // Call checkApproval immediately with the returned session rather than
+      // waiting for onAuthStateChange SIGNED_IN, which can be delayed.
+      if (data?.session) await checkApproval(data.session)
+    } catch (err) {
+      console.error('handleSignIn error:', err)
+      setAuthError('Sign-in failed. Please check your connection and try again.')
+    } finally {
+      setSigningIn(false)
     }
-    // Call checkApproval immediately with the returned session rather than
-    // waiting for onAuthStateChange SIGNED_IN, which can be delayed.
-    if (data?.session) await checkApproval(data.session)
   }
 
   async function handleRequestAccess(e) {
