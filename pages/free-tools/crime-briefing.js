@@ -237,6 +237,16 @@ const CrimeMap = dynamic(
           // Update heatmap source
           const src = map.getSource('heatmap-src')
           if (src) src.setData(buildGeoJSON(filtered))
+
+          // Fit map to the bounds of all plotted incidents
+          if (filtered.length > 0) {
+            const lons = filtered.map(i => i.lon)
+            const lats = filtered.map(i => i.lat)
+            map.fitBounds(
+              [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+              { padding: 60, maxZoom: 14, duration: 800 }
+            )
+          }
         }
 
         if (map.isStyleLoaded()) rebuild()
@@ -380,13 +390,27 @@ async function downloadPDF(output, jurisdiction, startDate, endDate) {
     } catch {}
   }
 
+  // Normalize a briefing field to a plain string, stripping any residual JSON syntax
+  const normField = val => {
+    if (!val) return ''
+    const s = typeof val === 'string' ? val : JSON.stringify(val)
+    // If it still looks like a JSON object, try to extract just readable text
+    if (s.trimStart().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(s)
+        return Object.values(parsed).filter(v => typeof v === 'string').join('\n\n')
+      } catch { /* fall through */ }
+    }
+    return s
+  }
+
   // Briefing sections
   const sections = [
-    { title: 'Executive Summary', text: output.briefing.summary },
-    { title: 'Geographic Hot Spots', text: output.briefing.hotspots },
-    { title: 'Temporal Patterns', text: output.briefing.timePatterns },
-    { title: 'Patrol Recommendations', text: output.briefing.patrolRecommendations },
-    { title: 'Notable Incidents', text: output.briefing.notableIncidents },
+    { title: 'Executive Summary', text: normField(output.briefing.summary) },
+    { title: 'Geographic Hot Spots', text: normField(output.briefing.hotspots) },
+    { title: 'Temporal Patterns', text: normField(output.briefing.timePatterns) },
+    { title: 'Patrol Recommendations', text: normField(output.briefing.patrolRecommendations) },
+    { title: 'Notable Incidents', text: normField(output.briefing.notableIncidents) },
   ]
 
   const contentWidth = pageWidth - margin * 2
@@ -972,16 +996,22 @@ export default function CrimeBriefing() {
                       { key: 'timePatterns', title: 'Temporal Patterns' },
                       { key: 'patrolRecommendations', title: 'Patrol Recommendations' },
                       { key: 'notableIncidents', title: 'Notable Incidents' },
-                    ].map(({ key, title }) => output.briefing[key] ? (
-                      <div key={key} style={{ marginBottom: '28px' }}>
-                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', marginBottom: '10px', paddingBottom: '6px', borderBottom: '0.5px solid #1a1a1a' }}>
-                          {title}
+                    ].map(({ key, title }) => {
+                      const raw = output.briefing[key]
+                      // Normalize to a plain string — guard against objects or unparsed JSON
+                      const text = typeof raw === 'string' ? raw
+                        : raw ? JSON.stringify(raw) : ''
+                      return text ? (
+                        <div key={key} style={{ marginBottom: '28px' }}>
+                          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', marginBottom: '10px', paddingBottom: '6px', borderBottom: '0.5px solid #1a1a1a' }}>
+                            {title}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#888', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
+                            {text}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#888', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
-                          {output.briefing[key]}
-                        </div>
-                      </div>
-                    ) : null)}
+                      ) : null
+                    })}
                   </div>
 
                 </div>

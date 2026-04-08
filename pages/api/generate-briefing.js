@@ -154,17 +154,27 @@ Return a JSON object with exactly this structure — no preamble, no markdown, j
 
     let briefing
     try {
-      const text = message.content[0].text.trim()
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      briefing = JSON.parse(jsonMatch ? jsonMatch[0] : text)
-    } catch {
+      let text = message.content[0].text.trim()
+      // Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+      const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/s)
+      if (fenceMatch) text = fenceMatch[1].trim()
+      // Extract outermost JSON object
+      const start = text.indexOf('{')
+      const end = text.lastIndexOf('}')
+      if (start !== -1 && end !== -1) text = text.slice(start, end + 1)
+      const parsed = JSON.parse(text)
+      // Ensure all expected keys are present strings
       briefing = {
-        summary: message.content[0].text,
-        hotspots: '',
-        timePatterns: '',
-        patrolRecommendations: '',
-        notableIncidents: '',
+        summary: String(parsed.summary || ''),
+        hotspots: String(parsed.hotspots || ''),
+        timePatterns: String(parsed.timePatterns || ''),
+        patrolRecommendations: String(parsed.patrolRecommendations || ''),
+        notableIncidents: String(parsed.notableIncidents || ''),
       }
+    } catch {
+      // JSON parse failed — treat the entire response as the summary
+      const raw = message.content[0].text.trim()
+      briefing = { summary: raw, hotspots: '', timePatterns: '', patrolRecommendations: '', notableIncidents: '' }
     }
 
     res.status(200).json({ incidents, briefing })
