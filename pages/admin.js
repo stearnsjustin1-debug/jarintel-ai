@@ -64,6 +64,26 @@ export default function Admin() {
   const [totalGenerations, setTotalGenerations] = useState(0)
   const [loadingUsage, setLoadingUsage] = useState(false)
 
+  const [reports, setReports] = useState([])
+  const [loadingReports, setLoadingReports] = useState(false)
+  const [expandedReport, setExpandedReport] = useState(null)
+
+  async function fetchReports(pw) {
+    setLoadingReports(true)
+    try {
+      const res = await fetch('/api/admin/reports', {
+        headers: { 'x-admin-password': pw },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setReports(data.reports ?? [])
+    } catch (err) {
+      console.error('Reports fetch error:', err)
+    } finally {
+      setLoadingReports(false)
+    }
+  }
+
   async function fetchUsage(pw) {
     setLoadingUsage(true)
     try {
@@ -103,6 +123,7 @@ export default function Admin() {
       setLoadingProfiles(false)
     }
     fetchUsage(pw)
+    fetchReports(pw)
   }
 
   async function handleSignIn(e) {
@@ -123,6 +144,7 @@ export default function Admin() {
     setProfiles(data.profiles ?? [])
     setAuthed(true)
     fetchUsage(password)
+    fetchReports(password)
   }
 
   async function handleApprove(email) {
@@ -364,6 +386,87 @@ export default function Admin() {
 
               {!loadingUsage && usageUsers.length === 0 && (
                 <div style={{ fontSize: '11px', color: '#444' }}>No usage data yet.</div>
+              )}
+            </div>
+
+            {/* ── GENERATED REPORTS ──────────────────────────────────────── */}
+            <div style={{ marginTop: '64px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888' }}>
+                  // Generated Reports
+                </div>
+                {loadingReports && (
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#444', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Loading...</span>
+                )}
+              </div>
+
+              {reports.length > 0 && (
+                <div style={{ border: '0.5px solid #1a1a1a' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: '#080808' }}>
+                        <th style={thStyle}>Date</th>
+                        <th style={thStyle}>User</th>
+                        <th style={thStyle}>Agency</th>
+                        <th style={thStyle}>Tool</th>
+                        <th style={thStyle}>Jurisdiction</th>
+                        <th style={thStyle}>Preview</th>
+                        <th style={thStyle}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reports.map(r => (
+                        <>
+                          <tr key={r.id} style={{ background: '#000' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#0a0a0a'}
+                            onMouseLeave={e => e.currentTarget.style.background = '#000'}
+                          >
+                            <td style={{ ...tdStyle, color: '#666', fontSize: '10px', whiteSpace: 'nowrap' }}>
+                              {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                            <td style={{ ...tdStyle, fontSize: '10px' }}>{r.email}</td>
+                            <td style={{ ...tdStyle, color: r.agency !== '—' ? '#bbb' : '#444' }}>{r.agency}</td>
+                            <td style={{ ...tdStyle, fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>{r.tool}</td>
+                            <td style={{ ...tdStyle, color: r.jurisdiction ? '#bbb' : '#444' }}>{r.jurisdiction || '—'}</td>
+                            <td style={{ ...tdStyle, color: '#555', fontSize: '10px', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.preview}</td>
+                            <td style={tdStyle}>
+                              <button
+                                onClick={() => setExpandedReport(expandedReport === r.id ? null : r.id)}
+                                style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '5px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#666' }}
+                                onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
+                              >
+                                {expandedReport === r.id ? 'Hide' : 'View →'}
+                              </button>
+                            </td>
+                          </tr>
+                          {expandedReport === r.id && (
+                            <tr key={`${r.id}-expand`} style={{ background: '#050505' }}>
+                              <td colSpan={7} style={{ padding: '24px 20px', borderBottom: '0.5px solid #1a1a1a' }}>
+                                <pre style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#bbb', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, lineHeight: 1.8 }}>
+                                  {r.tool === 'crime-briefing'
+                                    ? (() => {
+                                        try {
+                                          const parsed = JSON.parse(r.report_content)
+                                          return JSON.stringify(parsed, null, 2)
+                                        } catch {
+                                          return r.report_content
+                                        }
+                                      })()
+                                    : r.report_content}
+                                </pre>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {!loadingReports && reports.length === 0 && (
+                <div style={{ fontSize: '11px', color: '#444' }}>No reports saved yet.</div>
               )}
             </div>
 

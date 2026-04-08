@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../../lib/supabase-admin'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-async function logUsage(token) {
+async function logUsage(token, reportContent) {
   console.log('[logUsage] performance-review: starting')
   const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
   if (userError) { console.error('[logUsage] getUser error:', userError); return }
@@ -23,6 +23,8 @@ async function logUsage(token) {
   const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
     user_id: profile.id,
     tool: 'performance-review',
+    report_type: 'performance-review',
+    report_content: reportContent || null,
     created_at: new Date().toISOString(),
   })
   if (insertError) {
@@ -82,7 +84,7 @@ Write the full evaluation now, with a labeled section for each category followed
     // Log usage non-blocking — a logging failure must not affect the response
     const authHeader = req.headers.authorization
     if (authHeader?.startsWith('Bearer ')) {
-      logUsage(authHeader.slice(7)).catch(err => console.error('Usage log error:', err))
+      logUsage(authHeader.slice(7), message.content[0].text).catch(err => console.error('Usage log error:', err))
     }
 
     res.status(200).json({ review: message.content[0].text })

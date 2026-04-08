@@ -7,7 +7,7 @@ const MAX_INCIDENTS = 500
 
 // ── Usage logging ────────────────────────────────────────────────────────────
 
-async function logUsage(token) {
+async function logUsage(token, reportContent, jurisdictionName) {
   console.log('[logUsage] crime-briefing: starting')
   const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
   if (userError) { console.error('[logUsage] getUser error:', userError); return }
@@ -27,6 +27,9 @@ async function logUsage(token) {
   const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
     user_id: profile.id,
     tool: 'crime-briefing',
+    report_type: 'crime-briefing',
+    report_content: reportContent || null,
+    jurisdiction: jurisdictionName || null,
     created_at: new Date().toISOString(),
   })
   if (insertError) {
@@ -230,7 +233,7 @@ Provide 3-6 hotspots, 4-5 patrol recommendations, and 2-5 notable incidents.`
     // Log usage non-blocking — a logging failure must not affect the response
     const authHeader = req.headers.authorization
     if (authHeader?.startsWith('Bearer ')) {
-      logUsage(authHeader.slice(7)).catch(err => console.error('Usage log error:', err))
+      logUsage(authHeader.slice(7), JSON.stringify(briefing), jurisdiction).catch(err => console.error('Usage log error:', err))
     }
 
     res.status(200).json({ incidents, briefing })
