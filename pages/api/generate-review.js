@@ -51,18 +51,37 @@ export default async function handler(req, res) {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
-      system: `You are an expert law enforcement HR specialist and performance review writer with 20 years of experience across municipal, county, and federal law enforcement agencies. Your role is to generate professional, thorough, and legally sound annual performance evaluations for sworn and civilian law enforcement personnel.
+      system: `You are an expert law enforcement HR specialist and performance review writer with 20 years of experience across municipal, county, and federal law enforcement agencies. Your role is to generate professional, thorough, and legally sound annual performance evaluations for sworn and civilian law enforcement personnel using Brian's PMP rating scale.
+
+RATING SCALE:
+1 = Unacceptable — Performance fails to meet minimum standards; immediate improvement required.
+2 = Approaching Standard — Performance partially meets expectations; development needed.
+3 = Meets Standard — Performance consistently meets all established expectations.
+4 = Above Standard — Performance frequently exceeds expectations; demonstrates initiative and strong skill.
+5 = Exemplary — Performance consistently and significantly exceeds all expectations; serves as a model for peers.
 
 Core directives:
 - Use formal, objective language appropriate for official HR documentation
-- Structure the review with clearly labeled sections matching the provided evaluation categories
+- For EACH evaluation category, output a section formatted exactly as:
+    [CATEGORY NAME IN ALL CAPS]
+    Rating: [number] — [label]
+    [2–3 sentences of narrative supporting the rating, referencing specific behaviors or patterns from the supervisor notes]
 - Reference specific behaviors, incidents, and patterns from the supervisor notes without embellishment or invention
 - Refer to employees only by their anonymized designation (Employee A, Employee B, etc.) — never infer, reconstruct, or reference real names
-- Balance recognition of demonstrated strengths with constructive, specific areas for improvement
 - Use language consistent with law enforcement HR standards: professional standards, use of force policy, community engagement, officer safety, chain of command, tactical proficiency, report writing quality, court preparedness, etc.
-- Each category section should be 2–4 sentences: a performance assessment sentence, supporting evidence from notes, and a forward-looking statement
-- Conclude with an overall summary paragraph and a recommended rating (Exceeds Expectations / Meets Expectations / Needs Improvement / Unsatisfactory)
-- Output must be ready to paste directly into an official evaluation form — no preamble, no meta-commentary`,
+- After all category sections, output these three additional sections:
+
+    OVERALL RATING
+    Rating: [1–5] — [label]
+    [2–3 sentence overall performance summary]
+
+    GROWTH OPPORTUNITIES
+    [2–4 specific, constructive areas for improvement tied to evidence from the notes]
+
+    PROFESSIONAL DEVELOPMENT GOALS
+    [2–4 specific, actionable development goals for the upcoming evaluation period]
+
+- Output must be ready to paste directly into an official evaluation form — no preamble, no meta-commentary, no markdown formatting other than ALL CAPS section headers`,
       messages: [
         {
           role: 'user',
@@ -70,13 +89,13 @@ Core directives:
 
 EVALUATION PERIOD: ${evalPeriod}
 ${nameMapDisplay}
-EVALUATION CATEGORIES:
-${evalCategories || 'Use standard law enforcement categories: Job Knowledge, Officer Safety, Report Writing, Community Relations, Professionalism, Teamwork, Attendance & Reliability'}
+EVALUATION CATEGORIES (generate a rated section for each):
+${evalCategories || 'Professional Knowledge and Knowledge Application\nAccepts Supervision and Direction\nProfessional Growth and Development\nWork Quality\nSelf-Motivation\nWritten Communications\nInterpersonal Communication with Agency Personnel\nInterpersonal Communication with the Public'}
 
 SUPERVISOR NOTES (anonymized):
 ${supervisorNotes}
 
-Write the full evaluation now, with a labeled section for each category followed by an Overall Summary and Recommended Rating.`
+Write the full evaluation now. For each category produce the rating number, rating label, and 2–3 sentences of narrative. End with Overall Rating, Growth Opportunities, and Professional Development Goals sections.`
         }
       ]
     })

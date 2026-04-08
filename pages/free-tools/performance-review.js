@@ -80,6 +80,31 @@ const ghostBtn = {
   width: '100%',
 }
 
+// ── PMP evaluation categories (Brian's template) ──────────────────────────────
+
+const NON_SUPERVISORY_CATEGORIES = [
+  'Professional Knowledge and Knowledge Application',
+  'Accepts Supervision and Direction',
+  'Professional Growth and Development',
+  'Grooming and Dress',
+  'Care of Vehicle / Equipment / Workspace',
+  'Problem Solving',
+  'Performance during Stressful Situations',
+  'Written Communications',
+  'Interpersonal Communication with Agency Personnel',
+  'Interpersonal Communication with the Public',
+  'Work Quality',
+  'Self-Motivation',
+  'Safety and Tactical Proficiency',
+  'Investigative Skills',
+]
+
+const SUPERVISORY_CATEGORIES = [
+  'Leading Change and Improvement',
+  'Resource Management and Planning',
+  'Developing Others',
+]
+
 // ── PDF watermark ────────────────────────────────────────────────────────────
 
 // Full JAR logo SVG as a proper XML string for canvas rendering
@@ -238,6 +263,42 @@ async function generatePDF(reviewText, evalPeriod) {
   doc.save(`performance-review-${new Date().toISOString().split('T')[0]}.pdf`)
 }
 
+// ── Word template download ───────────────────────────────────────────────────
+
+function downloadWordTemplate(categories, evalPeriod) {
+  const SCALE = '1 = Unacceptable &nbsp;&nbsp;·&nbsp;&nbsp; 2 = Approaching Standard &nbsp;&nbsp;·&nbsp;&nbsp; 3 = Meets Standard &nbsp;&nbsp;·&nbsp;&nbsp; 4 = Above Standard &nbsp;&nbsp;·&nbsp;&nbsp; 5 = Exemplary'
+  const row = (label) => `
+    <h2 style="font-family:'Courier New',monospace;font-size:10pt;font-weight:bold;border-bottom:1px solid #000;padding-bottom:4pt;margin-top:20pt;margin-bottom:6pt">${label.toUpperCase()}</h2>
+    <p style="font-family:'Courier New',monospace;font-size:8pt;color:#555;margin:0 0 8pt">${SCALE}</p>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;margin:0 0 6pt"><b>Rating (circle one):</b> &nbsp;&nbsp; 1 &nbsp;&nbsp;&nbsp; 2 &nbsp;&nbsp;&nbsp; 3 &nbsp;&nbsp;&nbsp; 4 &nbsp;&nbsp;&nbsp; 5</p>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;margin:0 0 4pt"><b>Notes:</b></p>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;color:#aaa">___________________________________________________________________________</p>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;color:#aaa">___________________________________________________________________________</p>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;color:#aaa">___________________________________________________________________________</p>
+  `
+  const html = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'></head><body style="margin:1in;font-family:'Courier New',monospace">
+    <h1 style="font-size:14pt;font-weight:bold;font-family:'Courier New',monospace;margin-bottom:4pt">JAR Intelligence</h1>
+    <p style="font-size:9pt;color:#666;font-family:'Courier New',monospace;margin:0 0 12pt">Performance Evaluation Template &nbsp;·&nbsp; jarintel.ai</p>
+    <hr style="border:0;border-top:1px solid #000;margin:0 0 14pt"/>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;margin:0 0 8pt"><b>Employee Name:</b> &nbsp;&nbsp;_____________________________________</p>
+    <p style="font-family:'Courier New',monospace;font-size:10pt;margin:0 0 14pt"><b>Evaluation Period:</b> &nbsp;&nbsp;${evalPeriod || '_____________________________________'}</p>
+    <hr style="border:0;border-top:1px solid #000;margin:0 0 6pt"/>
+    ${categories.map(row).join('')}
+    ${row('Growth Opportunities')}
+    ${row('Professional Development Goals')}
+    </body></html>
+  `
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'performance-evaluation-template.doc'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 // ── Page component ──────────────────────────────────────────────────────────
 
 export default function PerformanceReview() {
@@ -272,7 +333,11 @@ export default function PerformanceReview() {
   const currentYear = new Date().getFullYear()
   const [evalStartDate, setEvalStartDate] = useState(`${currentYear}-01-01`)
   const [evalEndDate, setEvalEndDate] = useState(`${currentYear}-12-31`)
-  const [evalCategories, setEvalCategories] = useState('')
+  const [selectedCategories, setSelectedCategories] = useState(
+    () => new Set(NON_SUPERVISORY_CATEGORIES)
+  )
+  const [customCategories, setCustomCategories] = useState([])
+  const [customCategoryInput, setCustomCategoryInput] = useState('')
   const [supervisorNotes, setSupervisorNotes] = useState('')
 
   // Output
@@ -471,7 +536,9 @@ export default function PerformanceReview() {
         headers,
         body: JSON.stringify({
           supervisorNotes: anonymizeText(supervisorNotes, names),
-          evalCategories: anonymizeText(evalCategories, names),
+          evalCategories: [...NON_SUPERVISORY_CATEGORIES, ...SUPERVISORY_CATEGORIES, ...customCategories]
+            .filter(c => selectedCategories.has(c))
+            .join('\n'),
           evalPeriod,
           nameMap: names,
         }),
@@ -804,36 +871,141 @@ export default function PerformanceReview() {
                 )}
               </div>
 
-              {/* Eval details */}
-              <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
-                <div style={{ background: '#000', padding: '28px' }}>
-                  <label style={labelStyle}>Evaluation Period</label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input
-                      type="date"
-                      className="mob-input"
-                      value={evalStartDate}
-                      onChange={e => setEvalStartDate(e.target.value)}
-                      style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
-                    />
-                    <span style={{ color: '#444', fontSize: '11px', flexShrink: 0 }}>–</span>
-                    <input
-                      type="date"
-                      className="mob-input"
-                      value={evalEndDate}
-                      onChange={e => setEvalEndDate(e.target.value)}
-                      style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
-                    />
-                  </div>
-                </div>
-                <div style={{ background: '#000', padding: '28px' }}>
-                  <label style={labelStyle}>Evaluation Categories</label>
-                  <textarea
-                    style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
-                    value={evalCategories}
-                    onChange={e => setEvalCategories(e.target.value)}
-                    placeholder={'Job Knowledge\nOfficer Safety\nReport Writing\nCommunity Relations\nProfessionalism\nTeamwork'}
+              {/* Evaluation Period */}
+              <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>
+                <label style={labelStyle}>Evaluation Period</label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', maxWidth: '480px' }}>
+                  <input
+                    type="date"
+                    className="mob-input"
+                    value={evalStartDate}
+                    onChange={e => setEvalStartDate(e.target.value)}
+                    style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
                   />
+                  <span style={{ color: '#444', fontSize: '11px', flexShrink: 0 }}>–</span>
+                  <input
+                    type="date"
+                    className="mob-input"
+                    value={evalEndDate}
+                    onChange={e => setEvalEndDate(e.target.value)}
+                    style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
+                  />
+                </div>
+              </div>
+
+              {/* Evaluation Categories */}
+              <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Evaluation Categories</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cats = [...NON_SUPERVISORY_CATEGORIES, ...SUPERVISORY_CATEGORIES, ...customCategories].filter(c => selectedCategories.has(c))
+                      downloadWordTemplate(cats, evalPeriod)
+                    }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '8px 16px', cursor: 'pointer' }}
+                    onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+                    onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
+                  >Download Word Template</button>
+                </div>
+
+                {/* Non-supervisory */}
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#555', marginBottom: '12px' }}>Non-Supervisory</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginBottom: '20px' }}>
+                  {NON_SUPERVISORY_CATEGORIES.map(cat => (
+                    <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.has(cat)}
+                        onChange={() => setSelectedCategories(prev => {
+                          const next = new Set(prev)
+                          next.has(cat) ? next.delete(cat) : next.add(cat)
+                          return next
+                        })}
+                        style={{ accentColor: '#888', width: '13px', height: '13px', flexShrink: 0 }}
+                      />
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: selectedCategories.has(cat) ? '#bbb' : '#555', lineHeight: 1.4 }}>{cat}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Supervisory */}
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#555', marginBottom: '12px' }}>Supervisory</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginBottom: '20px' }}>
+                  {SUPERVISORY_CATEGORIES.map(cat => (
+                    <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.has(cat)}
+                        onChange={() => setSelectedCategories(prev => {
+                          const next = new Set(prev)
+                          next.has(cat) ? next.delete(cat) : next.add(cat)
+                          return next
+                        })}
+                        style={{ accentColor: '#888', width: '13px', height: '13px', flexShrink: 0 }}
+                      />
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: selectedCategories.has(cat) ? '#bbb' : '#555', lineHeight: 1.4 }}>{cat}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Custom categories */}
+                {customCategories.map(cat => (
+                  <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '8px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.has(cat)}
+                      onChange={() => setSelectedCategories(prev => {
+                        const next = new Set(prev)
+                        next.has(cat) ? next.delete(cat) : next.add(cat)
+                        return next
+                      })}
+                      style={{ accentColor: '#888', width: '13px', height: '13px', flexShrink: 0 }}
+                    />
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: selectedCategories.has(cat) ? '#bbb' : '#555' }}>{cat}</span>
+                    <span
+                      onClick={e => { e.preventDefault(); setCustomCategories(prev => prev.filter(c => c !== cat)); setSelectedCategories(prev => { const next = new Set(prev); next.delete(cat); return next }) }}
+                      style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', color: '#444', cursor: 'pointer', marginLeft: '4px' }}
+                      onMouseEnter={e => e.target.style.color = '#c44'}
+                      onMouseLeave={e => e.target.style.color = '#444'}
+                    >✕</span>
+                  </label>
+                ))}
+
+                {/* Add custom */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <input
+                    type="text"
+                    value={customCategoryInput}
+                    onChange={e => setCustomCategoryInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const v = customCategoryInput.trim()
+                        if (v && !customCategories.includes(v)) {
+                          setCustomCategories(prev => [...prev, v])
+                          setSelectedCategories(prev => new Set([...prev, v]))
+                        }
+                        setCustomCategoryInput('')
+                      }
+                    }}
+                    placeholder="Add custom category..."
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = customCategoryInput.trim()
+                      if (v && !customCategories.includes(v)) {
+                        setCustomCategories(prev => [...prev, v])
+                        setSelectedCategories(prev => new Set([...prev, v]))
+                      }
+                      setCustomCategoryInput('')
+                    }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#888', background: 'transparent', border: '0.5px solid #333', padding: '0 16px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.borderColor = '#777' }}
+                    onMouseLeave={e => { e.target.style.color = '#888'; e.target.style.borderColor = '#333' }}
+                  >Add →</button>
                 </div>
               </div>
 
@@ -850,6 +1022,50 @@ export default function PerformanceReview() {
                   placeholder="Officer responded to 14 use-of-force incidents this year with no sustained complaints. Consistently submits reports within shift. Received two commendations from the public..."
                   required
                 />
+
+                {/* Template upload */}
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{ ...labelStyle, marginBottom: '8px' }}>Upload Completed Template (Optional)</label>
+                  <div style={{ fontSize: '10px', color: '#555', marginBottom: '8px', lineHeight: 1.7 }}>
+                    Accepts .txt files. For Word (.docx) files, save as Plain Text first. Content will be appended to the notes above.
+                  </div>
+                  <input
+                    type="file"
+                    accept=".txt,.docx,.pdf"
+                    style={{ display: 'none' }}
+                    id="template-upload"
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      if (file.name.endsWith('.docx')) {
+                        reader.readAsArrayBuffer(file)
+                        reader.onload = ev => {
+                          try {
+                            const decoder = new TextDecoder('utf-8', { fatal: false })
+                            const raw = decoder.decode(ev.target.result)
+                            const matches = raw.match(/<w:t[^>]*>([^<]+)<\/w:t>/g) || []
+                            const text = matches.map(m => m.replace(/<[^>]+>/g, '')).join(' ').trim()
+                            if (text) setSupervisorNotes(prev => prev ? prev + '\n\n' + text : text)
+                          } catch { /* ignore extraction errors */ }
+                        }
+                      } else {
+                        reader.readAsText(file)
+                        reader.onload = ev => {
+                          const text = ev.target.result?.trim()
+                          if (text) setSupervisorNotes(prev => prev ? prev + '\n\n' + text : text)
+                        }
+                      }
+                      e.target.value = ''
+                    }}
+                  />
+                  <label
+                    htmlFor="template-upload"
+                    style={{ display: 'inline-block', fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#666', border: '0.5px dashed #2a2a2a', padding: '10px 20px', cursor: 'pointer' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#999'; e.currentTarget.style.borderColor = '#555' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#666'; e.currentTarget.style.borderColor = '#2a2a2a' }}
+                  >Choose File (.txt, .docx, .pdf)</label>
+                </div>
               </div>
 
               {/* Generate button */}
