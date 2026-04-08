@@ -174,12 +174,19 @@ ${incidentLines}
 
 Return a JSON object with exactly this structure — no preamble, no markdown, just the JSON:
 {
-  "summary": "2-3 paragraph executive summary covering overall volume, dominant crime types, and the most significant trends observed in the data.",
-  "hotspots": "Geographic hot spot analysis. Identify specific streets, intersections, blocks, or zones with elevated incident density. Note any concentration patterns. 2-3 paragraphs.",
-  "timePatterns": "Temporal pattern analysis. Identify peak hours, high-activity days of week, overnight vs daytime splits, and any shift-coverage implications. 2-3 paragraphs.",
-  "patrolRecommendations": "4-5 specific, numbered patrol deployment and resource allocation recommendations directly supported by the data patterns.",
-  "notableIncidents": "Any notable incident clusters, outliers, or escalating patterns that warrant command-level attention."
-}`
+  "summary": "2-3 paragraph executive summary covering overall volume, dominant crime types, and the most significant trends. Separate paragraphs with \\n\\n.",
+  "hotspots": [
+    {"location": "Specific street name, intersection, or block", "description": "Incident density, types, and pattern at this location."}
+  ],
+  "timePatterns": "Temporal pattern analysis. Use shift labels: DAY SHIFT (0600-1400): observations. EVENING SHIFT (1400-2200): observations. OVERNIGHT (2200-0600): observations. Include peak days of week. Separate each shift block with \\n\\n.",
+  "patrolRecommendations": [
+    {"title": "Short action-oriented title", "detail": "Specific operational detail and the data pattern that supports it."}
+  ],
+  "notableIncidents": [
+    {"date": "Date or date range", "description": "Description of the notable cluster, outlier, or escalating pattern."}
+  ]
+}
+Provide 3-6 hotspots, 4-5 patrol recommendations, and 2-5 notable incidents.`
         }
       ]
     })
@@ -195,13 +202,12 @@ Return a JSON object with exactly this structure — no preamble, no markdown, j
       const end = text.lastIndexOf('}')
       if (start !== -1 && end !== -1) text = text.slice(start, end + 1)
       const parsed = JSON.parse(text)
-      // Ensure all expected keys are present strings
       briefing = {
         summary: String(parsed.summary || ''),
-        hotspots: String(parsed.hotspots || ''),
+        hotspots: Array.isArray(parsed.hotspots) ? parsed.hotspots : String(parsed.hotspots || ''),
         timePatterns: String(parsed.timePatterns || ''),
-        patrolRecommendations: String(parsed.patrolRecommendations || ''),
-        notableIncidents: String(parsed.notableIncidents || ''),
+        patrolRecommendations: Array.isArray(parsed.patrolRecommendations) ? parsed.patrolRecommendations : String(parsed.patrolRecommendations || ''),
+        notableIncidents: Array.isArray(parsed.notableIncidents) ? parsed.notableIncidents : String(parsed.notableIncidents || ''),
       }
     } catch {
       // JSON parse failed — try regex field extraction before falling back to raw dump
@@ -214,10 +220,10 @@ Return a JSON object with exactly this structure — no preamble, no markdown, j
       const s = extractField('summary')
       briefing = {
         summary: s || raw,
-        hotspots: extractField('hotspots'),
+        hotspots: [],
         timePatterns: extractField('timePatterns'),
-        patrolRecommendations: extractField('patrolRecommendations'),
-        notableIncidents: extractField('notableIncidents'),
+        patrolRecommendations: [],
+        notableIncidents: [],
       }
     }
 

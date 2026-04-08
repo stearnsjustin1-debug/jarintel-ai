@@ -390,9 +390,15 @@ async function downloadPDF(output, jurisdiction, startDate, endDate) {
     } catch {}
   }
 
-  // Normalize a briefing field to a plain string — key-aware so JSON dump is correctly split
+  // Normalize a briefing field to plain text for PDF — handles arrays and legacy strings
   const normField = (val, key) => {
-    if (!val) return ''
+    if (!val || (Array.isArray(val) && val.length === 0)) return ''
+    if (Array.isArray(val)) {
+      if (key === 'hotspots') return val.map(i => `• ${i.location}: ${i.description || ''}`).join('\n')
+      if (key === 'patrolRecommendations') return val.map((i, n) => `${n + 1}. ${i.title}: ${i.detail || ''}`).join('\n')
+      if (key === 'notableIncidents') return val.map(i => `• ${i.date}: ${i.description || ''}`).join('\n')
+      return val.map(i => typeof i === 'string' ? i : JSON.stringify(i)).join('\n')
+    }
     const s = typeof val === 'string' ? val : JSON.stringify(val)
     if (s.trimStart().startsWith('{')) {
       try {
@@ -404,7 +410,7 @@ async function downloadPDF(output, jurisdiction, startDate, endDate) {
     return s
   }
 
-  // Briefing sections
+  // Briefing sections for PDF
   const sections = [
     { title: 'Executive Summary', text: normField(output.briefing.summary, 'summary') },
     { title: 'Geographic Hot Spots', text: normField(output.briefing.hotspots, 'hotspots') },
@@ -645,10 +651,10 @@ export default function CrimeBriefing() {
               const reparsed = JSON.parse(s)
               if (reparsed.summary) briefing = {
                 summary: String(reparsed.summary || ''),
-                hotspots: String(reparsed.hotspots || ''),
+                hotspots: Array.isArray(reparsed.hotspots) ? reparsed.hotspots : String(reparsed.hotspots || ''),
                 timePatterns: String(reparsed.timePatterns || ''),
-                patrolRecommendations: String(reparsed.patrolRecommendations || ''),
-                notableIncidents: String(reparsed.notableIncidents || ''),
+                patrolRecommendations: Array.isArray(reparsed.patrolRecommendations) ? reparsed.patrolRecommendations : String(reparsed.patrolRecommendations || ''),
+                notableIncidents: Array.isArray(reparsed.notableIncidents) ? reparsed.notableIncidents : String(reparsed.notableIncidents || ''),
               }
             } catch {}
           }
@@ -970,7 +976,7 @@ export default function CrimeBriefing() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888' }}>// Briefing Output</div>
-                    <div style={{ fontSize: '11px', color: '#555', marginTop: '4px' }}>
+                    <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
                       {output.incidents.length} incidents geocoded · {jurisdiction}
                     </div>
                   </div>
@@ -1007,28 +1013,113 @@ export default function CrimeBriefing() {
                   <div style={{ background: '#000', padding: '24px', maxHeight: '780px', overflowY: 'auto' }}>
                     <div style={sectionHeadStyle}>// Intelligence Briefing</div>
 
-                    {[
-                      { key: 'summary', title: 'Executive Summary' },
-                      { key: 'hotspots', title: 'Geographic Hot Spots' },
-                      { key: 'timePatterns', title: 'Temporal Patterns' },
-                      { key: 'patrolRecommendations', title: 'Patrol Recommendations' },
-                      { key: 'notableIncidents', title: 'Notable Incidents' },
-                    ].map(({ key, title }) => {
-                      const raw = output.briefing[key]
-                      // Normalize to a plain string — guard against objects or unparsed JSON
-                      const text = typeof raw === 'string' ? raw
-                        : raw ? JSON.stringify(raw) : ''
-                      return text ? (
-                        <div key={key} style={{ marginBottom: '28px' }}>
-                          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', marginBottom: '10px', paddingBottom: '6px', borderBottom: '0.5px solid #1a1a1a' }}>
-                            {title}
-                          </div>
-                          <div style={{ fontSize: '11px', color: '#888', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
-                            {text}
-                          </div>
-                        </div>
-                      ) : null
-                    })}
+                    {(() => {
+                      const b = output.briefing
+                      const secHead = title => (
+                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', marginBottom: '12px', paddingBottom: '6px', borderBottom: '0.5px solid #222' }}>{title}</div>
+                      )
+                      const bullet = { display: 'flex', gap: '10px', marginBottom: '10px', fontSize: '11px', color: '#ccc', lineHeight: 1.85 }
+                      const dot = { color: '#555', flexShrink: 0 }
+                      const bold = { color: '#fff', fontWeight: 600 }
+
+                      return (
+                        <>
+                          {/* Executive Summary */}
+                          {b.summary && (
+                            <div style={{ marginBottom: '32px' }}>
+                              {secHead('Executive Summary')}
+                              {String(b.summary).split(/\n\n+/).filter(p => p.trim()).map((para, i) => (
+                                <p key={i} style={{ fontSize: '11px', color: '#ccc', lineHeight: 1.9, margin: '0 0 12px' }}>{para.trim()}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Geographic Hot Spots */}
+                          {b.hotspots && (Array.isArray(b.hotspots) ? b.hotspots.length > 0 : b.hotspots) && (
+                            <div style={{ marginBottom: '32px' }}>
+                              {secHead('Geographic Hot Spots')}
+                              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                {Array.isArray(b.hotspots)
+                                  ? b.hotspots.map((item, i) => (
+                                    <li key={i} style={bullet}>
+                                      <span style={dot}>·</span>
+                                      <span><span style={bold}>{item.location}</span>{item.description ? ` — ${item.description}` : ''}</span>
+                                    </li>
+                                  ))
+                                  : String(b.hotspots).split(/\n/).filter(l => l.trim()).map((line, i) => (
+                                    <li key={i} style={bullet}><span style={dot}>·</span><span>{line.replace(/^[-·•]\s*/, '')}</span></li>
+                                  ))
+                                }
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Temporal Patterns */}
+                          {b.timePatterns && (
+                            <div style={{ marginBottom: '32px' }}>
+                              {secHead('Temporal Patterns')}
+                              {String(b.timePatterns).split(/\n\n+/).filter(p => p.trim()).map((block, i) => {
+                                const lines = block.trim().split('\n')
+                                const first = lines[0].trim()
+                                const isSubHead = first.endsWith(':') || /^[A-Z][A-Z\s\-\/()0-9]+$/.test(first)
+                                if (isSubHead && lines.length > 1) return (
+                                  <div key={i} style={{ marginBottom: '14px' }}>
+                                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '6px' }}>{first.replace(/:$/, '')}</div>
+                                    {lines.slice(1).filter(l => l.trim()).map((ln, j) => (
+                                      <p key={j} style={{ fontSize: '11px', color: '#ccc', lineHeight: 1.9, margin: '0 0 6px' }}>{ln.trim()}</p>
+                                    ))}
+                                  </div>
+                                )
+                                return <p key={i} style={{ fontSize: '11px', color: '#ccc', lineHeight: 1.9, margin: '0 0 12px' }}>{block.trim()}</p>
+                              })}
+                            </div>
+                          )}
+
+                          {/* Patrol Recommendations */}
+                          {b.patrolRecommendations && (Array.isArray(b.patrolRecommendations) ? b.patrolRecommendations.length > 0 : b.patrolRecommendations) && (
+                            <div style={{ marginBottom: '32px' }}>
+                              {secHead('Patrol Recommendations')}
+                              <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                {Array.isArray(b.patrolRecommendations)
+                                  ? b.patrolRecommendations.map((item, i) => (
+                                    <li key={i} style={bullet}>
+                                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#555', flexShrink: 0, minWidth: '16px' }}>{i + 1}.</span>
+                                      <span><span style={bold}>{item.title}</span>{item.detail ? ` — ${item.detail}` : ''}</span>
+                                    </li>
+                                  ))
+                                  : String(b.patrolRecommendations).split(/\n/).filter(l => l.trim()).map((line, i) => (
+                                    <li key={i} style={bullet}>
+                                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#555', flexShrink: 0, minWidth: '16px' }}>{i + 1}.</span>
+                                      <span>{line.replace(/^\d+\.\s*/, '')}</span>
+                                    </li>
+                                  ))
+                                }
+                              </ol>
+                            </div>
+                          )}
+
+                          {/* Notable Incidents */}
+                          {b.notableIncidents && (Array.isArray(b.notableIncidents) ? b.notableIncidents.length > 0 : b.notableIncidents) && (
+                            <div style={{ marginBottom: '28px' }}>
+                              {secHead('Notable Incidents')}
+                              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                {Array.isArray(b.notableIncidents)
+                                  ? b.notableIncidents.map((item, i) => (
+                                    <li key={i} style={bullet}>
+                                      <span style={dot}>·</span>
+                                      <span><span style={bold}>{item.date}</span>{item.description ? ` — ${item.description}` : ''}</span>
+                                    </li>
+                                  ))
+                                  : String(b.notableIncidents).split(/\n/).filter(l => l.trim()).map((line, i) => (
+                                    <li key={i} style={bullet}><span style={dot}>·</span><span>{line.replace(/^[-·•]\s*/, '')}</span></li>
+                                  ))
+                                }
+                              </ul>
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
 
                 </div>
