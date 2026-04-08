@@ -263,7 +263,9 @@ export default function PerformanceReview() {
 
   // Tool inputs
   const [employeeNames, setEmployeeNames] = useState('')
-  const [evalPeriod, setEvalPeriod] = useState('')
+  const currentYear = new Date().getFullYear()
+  const [evalStartDate, setEvalStartDate] = useState(`${currentYear}-01-01`)
+  const [evalEndDate, setEvalEndDate] = useState(`${currentYear}-12-31`)
   const [evalCategories, setEvalCategories] = useState('')
   const [supervisorNotes, setSupervisorNotes] = useState('')
 
@@ -449,8 +451,17 @@ export default function PerformanceReview() {
     }
   }
 
+  const evalPeriod = (() => {
+    if (!evalStartDate || !evalEndDate) return ''
+    const fmt = iso => {
+      const [y, m, d] = iso.split('-').map(Number)
+      return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    }
+    return `${fmt(evalStartDate)} \u2013 ${fmt(evalEndDate)}`
+  })()
+
   const names = employeeNames.split('\n').map(n => n.trim()).filter(Boolean)
-  const canGenerate = supervisorNotes.trim() && evalPeriod.trim() && !loading
+  const canGenerate = supervisorNotes.trim() && evalStartDate && evalEndDate && !loading
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -703,7 +714,23 @@ export default function PerformanceReview() {
               <div className="mob-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#1a1a1a' }}>
                 <div style={{ background: '#000', padding: '28px' }}>
                   <label style={labelStyle}>Evaluation Period</label>
-                  <input style={inputStyle} value={evalPeriod} onChange={e => setEvalPeriod(e.target.value)} placeholder="Jan 1, 2024 – Dec 31, 2024" required />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="date"
+                      className="mob-input"
+                      value={evalStartDate}
+                      onChange={e => setEvalStartDate(e.target.value)}
+                      style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
+                    />
+                    <span style={{ color: '#444', fontSize: '11px', flexShrink: 0 }}>–</span>
+                    <input
+                      type="date"
+                      className="mob-input"
+                      value={evalEndDate}
+                      onChange={e => setEvalEndDate(e.target.value)}
+                      style={{ ...inputStyle, colorScheme: 'dark', flex: 1 }}
+                    />
+                  </div>
                 </div>
                 <div style={{ background: '#000', padding: '28px' }}>
                   <label style={labelStyle}>Evaluation Categories</label>
