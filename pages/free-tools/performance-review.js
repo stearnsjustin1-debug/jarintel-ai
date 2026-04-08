@@ -243,7 +243,8 @@ export default function PerformanceReview() {
     return () => clearTimeout(t)
   }, [authState])
 
-  // Auth listener: restore persisted session on page load and handle sign-in/out
+  // Auth listener: restore persisted session on page load, handle sign-in/out,
+  // and recover from apparent logout when the tab regains visibility.
   useEffect(() => {
     // `initialResolved` prevents double-execution between getSession() and
     // INITIAL_SESSION — whichever resolves first wins, the other is a no-op.
@@ -265,9 +266,12 @@ export default function PerformanceReview() {
           else setAuthState('initial')
         } else if (event === 'SIGNED_IN') {
           initialResolved = true
-          await checkApproval(s)
+          // Guard against double-call when handleSignIn already invoked checkApproval
+          const cur = authStateRef.current
+          if (cur !== 'approved' && cur !== 'pending' && cur !== 'checking') {
+            await checkApproval(s)
+          }
         } else if (event === 'TOKEN_REFRESHED') {
-          // Keep session state current after background token refresh
           if (s) setSession(s)
         } else if (event === 'SIGNED_OUT') {
           initialResolved = false
@@ -276,37 +280,38 @@ export default function PerformanceReview() {
         }
       }
     )
-    return () => subscription.unsubscribe()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Restore session when the tab regains visibility.
-  // Browsers suspend JS timers while a tab is hidden, so supabase-js can fire
-  // SIGNED_OUT when it can't refresh the token on time. Re-reading the session
-  // from localStorage on focus corrects the state without requiring a new login.
-  useEffect(() => {
+    // Browsers suspend JS timers while a tab is hidden, which can cause
+    // supabase-js to fire SIGNED_OUT even though the token is still valid in
+    // localStorage. On visibility restore, re-read the session and recover.
     function handleVisibility() {
       if (document.visibilityState !== 'visible') return
       supabase.auth.getSession().then(({ data: { session: s } }) => {
         const cur = authStateRef.current
         if (s && cur !== 'approved' && cur !== 'pending' && cur !== 'checking') {
-          // Session still valid but UI state was incorrectly cleared — restore it
           checkApproval(s)
+        } else if (s && (cur === 'approved' || cur === 'pending')) {
+          // Session refreshed in background — keep token current
+          setSession(s)
         } else if (!s && (cur === 'approved' || cur === 'pending')) {
-          // Genuinely signed out (e.g. token truly expired)
           setAuthState('initial')
           setSession(null)
         }
       })
     }
     document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignIn(e) {
     e.preventDefault()
     setAuthError('')
     setSigningIn(true)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: authEmail,
       password: authPassword,
     })
@@ -317,8 +322,11 @@ export default function PerformanceReview() {
           ? 'Incorrect email or password.'
           : error.message
       )
+      return
     }
-    // On success onAuthStateChange fires SIGNED_IN → checkApproval
+    // Call checkApproval immediately with the returned session rather than
+    // waiting for onAuthStateChange SIGNED_IN, which can be delayed.
+    if (data?.session) await checkApproval(data.session)
   }
 
   async function handleRequestAccess(e) {
