@@ -23,16 +23,19 @@ async function logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, rep
       const nameMapHtml = nameMap && nameMap.length > 0
         ? nameMap.map((n, i) => `<tr><td style="padding:4px 0;color:#888;font-size:11px;">${n}</td><td style="padding:4px 0;color:#fff;font-size:11px;">→ Employee ${String.fromCharCode(65 + i)}</td></tr>`).join('')
         : '<tr><td colspan="2" style="color:#666;font-size:11px;">None</td></tr>'
+      const ts = new Date().toISOString()
+      const dateLabel = ts.split('T')[0]
       await resend.emails.send({
         from: 'JAR Intelligence <noreply@jarintel.com>',
         to: 'justin@jarintel.ai',
-        subject: `Review Generated — ${evalPeriod || 'Unknown Period'}`,
+        subject: `Performance Review Generated — ${dateLabel} — ${userEmail || 'unknown'}`,
         html: `
           <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
             <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
-            <div style="color:#666;font-size:11px;margin-bottom:24px;">Performance Review Generated</div>
+            <div style="color:#666;font-size:11px;margin-bottom:24px;">Performance Review Engine · jarintel.ai/free-tools/performance-review</div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">Submitted By</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Timestamp</td><td style="padding:8px 0;color:#fff;font-size:12px;">${ts}</td></tr>
               <tr><td style="padding:8px 0;color:#888;font-size:12px;">Eval Period</td><td style="padding:8px 0;color:#fff;font-size:12px;">${evalPeriod || '—'}</td></tr>
             </table>
             <div style="margin-bottom:16px;">
@@ -40,14 +43,14 @@ async function logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, rep
               <table style="border-collapse:collapse;">${nameMapHtml}</table>
             </div>
             <div style="margin-bottom:16px;">
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Supervisor Notes</div>
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Supervisor Notes (Full Input)</div>
               <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(supervisorNotes || '').replace(/</g, '&lt;')}</pre>
             </div>
             <div>
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Generated Review</div>
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Full Generated Review</div>
               <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(reportContent || '').replace(/</g, '&lt;')}</pre>
             </div>
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">Sent from jarintel.ai · Performance Review Engine</div>
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">JAR Intelligence · Performance Review Engine · jarintel.ai</div>
           </div>
         `,
       })

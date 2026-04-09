@@ -25,26 +25,48 @@ async function logAndNotify(userEmail, jurisdictionName, startDate, endDate, inc
   if (process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY)
-      const summaryPreview = briefing?.summary ? String(briefing.summary).slice(0, 800) : '—'
+      const ts = new Date().toISOString()
+      const dateLabel = ts.split('T')[0]
+
+      const hotspotsHtml = Array.isArray(briefing?.hotspots) && briefing.hotspots.length
+        ? briefing.hotspots.map(h => `<b>${(h.location || '').replace(/</g, '&lt;')}</b> — ${(h.description || '').replace(/</g, '&lt;')}`).join('<br/><br/>')
+        : String(briefing?.hotspots || '—').replace(/</g, '&lt;')
+
+      const recsHtml = Array.isArray(briefing?.patrolRecommendations) && briefing.patrolRecommendations.length
+        ? briefing.patrolRecommendations.map(r => `<b>${(r.title || '').replace(/</g, '&lt;')}</b> — ${(r.detail || '').replace(/</g, '&lt;')}`).join('<br/><br/>')
+        : String(briefing?.patrolRecommendations || '—').replace(/</g, '&lt;')
+
+      const notableHtml = Array.isArray(briefing?.notableIncidents) && briefing.notableIncidents.length
+        ? briefing.notableIncidents.map(n => `<b>${(n.date || '').replace(/</g, '&lt;')}</b> — ${(n.description || '').replace(/</g, '&lt;')}`).join('<br/><br/>')
+        : String(briefing?.notableIncidents || '—').replace(/</g, '&lt;')
+
+      const block = (label, content) => `
+        <div style="margin-bottom:20px;">
+          <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">${label}</div>
+          <div style="font-size:11px;color:#bbb;background:#080808;padding:16px;line-height:1.8;">${content}</div>
+        </div>`
+
       await resend.emails.send({
         from: 'JAR Intelligence <noreply@jarintel.com>',
         to: 'justin@jarintel.ai',
-        subject: `Crime Briefing Generated — ${jurisdictionName || 'Unknown Jurisdiction'}`,
+        subject: `Crime Intelligence Briefing Generated — ${dateLabel} — ${userEmail || 'unknown'}`,
         html: `
           <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
             <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
-            <div style="color:#666;font-size:11px;margin-bottom:24px;">Crime Intelligence Briefing Generated</div>
+            <div style="color:#666;font-size:11px;margin-bottom:24px;">Crime Intelligence Briefing · jarintel.ai/free-tools/crime-briefing</div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">Submitted By</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Timestamp</td><td style="padding:8px 0;color:#fff;font-size:12px;">${ts}</td></tr>
               <tr><td style="padding:8px 0;color:#888;font-size:12px;">Jurisdiction</td><td style="padding:8px 0;color:#fff;font-size:12px;">${jurisdictionName || '—'}</td></tr>
               <tr><td style="padding:8px 0;color:#888;font-size:12px;">Date Range</td><td style="padding:8px 0;color:#fff;font-size:12px;">${startDate || '—'} to ${endDate || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Incidents</td><td style="padding:8px 0;color:#fff;font-size:12px;">${incidentCount}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Incidents Processed</td><td style="padding:8px 0;color:#fff;font-size:12px;">${incidentCount}</td></tr>
             </table>
-            <div>
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Executive Summary</div>
-              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${summaryPreview.replace(/</g, '&lt;')}</pre>
-            </div>
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">Sent from jarintel.ai · Crime Intelligence Briefing</div>
+            ${block('Executive Summary', (briefing?.summary || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'))}
+            ${block('Hot Spots', hotspotsHtml)}
+            ${block('Time Patterns', (briefing?.timePatterns || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'))}
+            ${block('Patrol Recommendations', recsHtml)}
+            ${block('Notable Incidents', notableHtml)}
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">JAR Intelligence · Crime Intelligence Briefing · jarintel.ai</div>
           </div>
         `,
       })

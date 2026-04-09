@@ -51,28 +51,61 @@ async function logAndNotify(userEmail, shiftDate, phase, notes, dorJson) {
   if (process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY)
+      const ts = new Date().toISOString()
+      const dateLabel = ts.split('T')[0]
+
+      const SCORE_LABELS = { 1: 'Unacceptable', 2: 'Needs Improvement', 3: 'Acceptable', 4: 'Above Average', 5: 'Superior' }
+      const SCORE_COLORS = { 1: '#c44', 2: '#b87333', 3: '#888', 4: '#5a9', 5: '#4a9' }
+
+      const categoriesHtml = dorJson?.categories
+        ? Object.entries(dorJson.categories).map(([cat, entry]) => {
+            const score = entry?.score ?? 3
+            const color = SCORE_COLORS[score] || '#888'
+            const label = SCORE_LABELS[score] || ''
+            return `
+              <tr style="border-top:0.5px solid #1a1a1a;">
+                <td style="padding:8px 12px;color:#bbb;font-size:11px;vertical-align:top;">${cat.replace(/</g, '&lt;')}</td>
+                <td style="padding:8px 12px;color:${color};font-size:11px;font-weight:bold;white-space:nowrap;vertical-align:top;">${score} — ${label}</td>
+                <td style="padding:8px 12px;color:#888;font-size:11px;vertical-align:top;">${(entry?.narrative || '').replace(/</g, '&lt;')}</td>
+              </tr>`
+          }).join('')
+        : '<tr><td colspan="3" style="color:#666;font-size:11px;padding:8px;">No category data</td></tr>'
+
       await resend.emails.send({
         from: 'JAR Intelligence <noreply@jarintel.com>',
         to: 'justin@jarintel.ai',
-        subject: `DOR Generated — ${shiftDate || 'Unknown Date'} · ${phase || 'Unknown Phase'}`,
+        subject: `FTO Daily Observation Report Generated — ${dateLabel} — ${userEmail || 'unknown'}`,
         html: `
-          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
+          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:800px;">
             <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
-            <div style="color:#666;font-size:11px;margin-bottom:24px;">FTO Daily Observation Report Generated</div>
+            <div style="color:#666;font-size:11px;margin-bottom:24px;">FTO Debrief Assistant · jarintel.ai/free-tools/fto-debrief</div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">Submitted By</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Timestamp</td><td style="padding:8px 0;color:#fff;font-size:12px;">${ts}</td></tr>
               <tr><td style="padding:8px 0;color:#888;font-size:12px;">Shift Date</td><td style="padding:8px 0;color:#fff;font-size:12px;">${shiftDate || '—'}</td></tr>
               <tr><td style="padding:8px 0;color:#888;font-size:12px;">Phase</td><td style="padding:8px 0;color:#fff;font-size:12px;">${phase || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Recommendation</td><td style="padding:8px 0;color:${dorJson?.recommendContinuation ? '#5a9' : '#c44'};font-size:12px;">${dorJson?.recommendContinuation ? 'Continue Training' : 'Review Required'}</td></tr>
             </table>
             <div style="margin-bottom:16px;">
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">FTO Notes</div>
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">FTO Notes (Full Input)</div>
               <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(notes || '').replace(/</g, '&lt;')}</pre>
             </div>
             <div style="margin-bottom:16px;">
               <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Overall Summary</div>
-              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(dorJson?.overallSummary || '').replace(/</g, '&lt;')}</pre>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(dorJson?.overallSummary || '—').replace(/</g, '&lt;')}</pre>
             </div>
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">Sent from jarintel.ai · FTO Debrief Assistant</div>
+            <div>
+              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Category Scores</div>
+              <table style="width:100%;border-collapse:collapse;background:#080808;">
+                <tr style="border-bottom:1px solid #333;">
+                  <th style="padding:8px 12px;color:#555;font-size:10px;text-align:left;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Category</th>
+                  <th style="padding:8px 12px;color:#555;font-size:10px;text-align:left;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Score</th>
+                  <th style="padding:8px 12px;color:#555;font-size:10px;text-align:left;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Narrative</th>
+                </tr>
+                ${categoriesHtml}
+              </table>
+            </div>
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">JAR Intelligence · FTO Debrief Assistant · jarintel.ai</div>
           </div>
         `,
       })
