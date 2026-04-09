@@ -276,6 +276,7 @@ export default function FtoDebrief() {
 
   // Form inputs
   const [userEmail, setUserEmail] = useState('')
+  const [agency, setAgency] = useState('')
   const [traineeName, setTraineeName] = useState('')
   const [ftoName, setFtoName] = useState('')
   const [shiftDate, setShiftDate] = useState('')
@@ -302,6 +303,7 @@ export default function FtoDebrief() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userEmail,
+          agency,
           traineeName: 'Trainee A',
           ftoName: 'FTO A',
           shiftDate,
@@ -441,6 +443,15 @@ export default function FtoDebrief() {
                 onChange={e => setUserEmail(e.target.value)}
                 placeholder="you@agency.gov"
                 required
+              />
+              <label style={{ ...labelStyle, marginTop: '16px' }}>Agency / Department</label>
+              <input
+                className="mob-input"
+                style={inputStyle}
+                type="text"
+                value={agency}
+                onChange={e => setAgency(e.target.value)}
+                placeholder="Hernando County Sheriff's Office"
               />
             </div>
 

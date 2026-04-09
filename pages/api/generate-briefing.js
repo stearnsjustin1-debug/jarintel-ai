@@ -8,13 +8,21 @@ const MAX_INCIDENTS = 500
 
 // ── Usage logging + notification ─────────────────────────────────────────────
 
-async function logAndNotify(userEmail, jurisdictionName, startDate, endDate, incidentCount, briefing) {
+// SQL to run in Supabase:
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS input_data text;
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS agency text;
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS tool_version text;
+
+async function logAndNotify(userEmail, agency, jurisdictionName, startDate, endDate, incidentCount, briefing) {
   const reportContent = JSON.stringify(briefing)
+  const inputData = JSON.stringify({ jurisdictionName, startDate, endDate, incidentCount, agency })
 
   const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
     tool: 'crime-briefing',
     report_type: 'crime-briefing',
     user_email: userEmail || null,
+    agency: agency || null,
+    input_data: inputData,
     report_content: reportContent || null,
     jurisdiction: jurisdictionName || null,
     created_at: new Date().toISOString(),
@@ -28,45 +36,29 @@ async function logAndNotify(userEmail, jurisdictionName, startDate, endDate, inc
       const ts = new Date().toISOString()
       const dateLabel = ts.split('T')[0]
 
-      const hotspotsHtml = Array.isArray(briefing?.hotspots) && briefing.hotspots.length
-        ? briefing.hotspots.map(h => `<b>${(h.location || '').replace(/</g, '&lt;')}</b> — ${(h.description || '').replace(/</g, '&lt;')}`).join('<br/><br/>')
-        : String(briefing?.hotspots || '—').replace(/</g, '&lt;')
-
-      const recsHtml = Array.isArray(briefing?.patrolRecommendations) && briefing.patrolRecommendations.length
-        ? briefing.patrolRecommendations.map(r => `<b>${(r.title || '').replace(/</g, '&lt;')}</b> — ${(r.detail || '').replace(/</g, '&lt;')}`).join('<br/><br/>')
-        : String(briefing?.patrolRecommendations || '—').replace(/</g, '&lt;')
-
-      const notableHtml = Array.isArray(briefing?.notableIncidents) && briefing.notableIncidents.length
-        ? briefing.notableIncidents.map(n => `<b>${(n.date || '').replace(/</g, '&lt;')}</b> — ${(n.description || '').replace(/</g, '&lt;')}`).join('<br/><br/>')
-        : String(briefing?.notableIncidents || '—').replace(/</g, '&lt;')
-
-      const block = (label, content) => `
-        <div style="margin-bottom:20px;">
-          <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">${label}</div>
-          <div style="font-size:11px;color:#bbb;background:#080808;padding:16px;line-height:1.8;">${content}</div>
-        </div>`
+      const summaryPreview = (briefing?.summary || '').slice(0, 300).replace(/</g, '&lt;')
 
       await resend.emails.send({
         from: 'JAR Intelligence <noreply@jarintel.com>',
         to: 'justin@jarintel.ai',
-        subject: `Crime Intelligence Briefing Generated — ${dateLabel} — ${userEmail || 'unknown'}`,
+        subject: `Crime Briefing Generated — ${jurisdictionName || 'unknown'} — ${userEmail || 'unknown'}`,
         html: `
-          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
-            <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
-            <div style="color:#666;font-size:11px;margin-bottom:24px;">Crime Intelligence Briefing · jarintel.ai/free-tools/crime-briefing</div>
+          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:600px;">
+            <div style="color:#fff;font-size:15px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
+            <div style="color:#666;font-size:11px;margin-bottom:20px;">Crime Intelligence Briefing</div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">Submitted By</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Timestamp</td><td style="padding:8px 0;color:#fff;font-size:12px;">${ts}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Jurisdiction</td><td style="padding:8px 0;color:#fff;font-size:12px;">${jurisdictionName || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Date Range</td><td style="padding:8px 0;color:#fff;font-size:12px;">${startDate || '—'} to ${endDate || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Incidents Processed</td><td style="padding:8px 0;color:#fff;font-size:12px;">${incidentCount}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:6px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Agency</td><td style="padding:6px 0;color:#fff;font-size:12px;">${agency || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Jurisdiction</td><td style="padding:6px 0;color:#fff;font-size:12px;">${jurisdictionName || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Date Range</td><td style="padding:6px 0;color:#fff;font-size:12px;">${startDate || '—'} to ${endDate || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Incidents</td><td style="padding:6px 0;color:#fff;font-size:12px;">${incidentCount}</td></tr>
             </table>
-            ${block('Executive Summary', (briefing?.summary || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'))}
-            ${block('Hot Spots', hotspotsHtml)}
-            ${block('Time Patterns', (briefing?.timePatterns || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'))}
-            ${block('Patrol Recommendations', recsHtml)}
-            ${block('Notable Incidents', notableHtml)}
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">JAR Intelligence · Crime Intelligence Briefing · jarintel.ai</div>
+            <div style="margin-bottom:16px;">
+              <div style="color:#888;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">Summary Preview</div>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:14px;">${summaryPreview}${briefing?.summary && briefing.summary.length > 300 ? '\n...' : ''}</pre>
+            </div>
+            <div style="color:#555;font-size:11px;font-style:italic;">Full report saved in Supabase usage_logs.</div>
+            <div style="margin-top:20px;padding-top:14px;border-top:1px solid #1a1a1a;color:#444;font-size:10px;">JAR Intelligence · jarintel.ai</div>
           </div>
         `,
       })
@@ -156,7 +148,7 @@ async function geocodeBatch(items, batchSize = 10) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { csvContent, jurisdiction, startDate, endDate, userEmail } = req.body
+  const { csvContent, jurisdiction, startDate, endDate, userEmail, agency } = req.body
   if (!csvContent || !jurisdiction) {
     return res.status(400).json({ error: 'CSV content and jurisdiction are required.' })
   }
@@ -268,7 +260,7 @@ Provide 3-6 hotspots, 4-5 patrol recommendations, and 2-5 notable incidents.`
     }
 
     // Log and notify non-blocking — failures must not affect the response
-    logAndNotify(userEmail, jurisdiction, startDate, endDate, incidents.length, briefing)
+    logAndNotify(userEmail, agency, jurisdiction, startDate, endDate, incidents.length, briefing)
       .catch(err => console.error('logAndNotify error:', err))
 
     res.status(200).json({ incidents, briefing })

@@ -38,11 +38,20 @@ const ALL_CATEGORIES = [
   'Criminal Procedure: Reflected in Field Performance',
 ]
 
-async function logAndNotify(userEmail, shiftDate, phase, notes, dorJson) {
+// SQL to run in Supabase:
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS input_data text;
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS agency text;
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS tool_version text;
+
+async function logAndNotify(userEmail, agency, shiftDate, phase, notes, dorJson) {
+  const inputData = JSON.stringify({ shiftDate, phase, notes, agency })
+
   const { error } = await supabaseAdmin.from('usage_logs').insert({
     tool: 'fto-debrief',
     report_type: 'fto-debrief',
     user_email: userEmail || null,
+    agency: agency || null,
+    input_data: inputData,
     report_content: JSON.stringify(dorJson) || null,
     created_at: new Date().toISOString(),
   })
@@ -54,58 +63,28 @@ async function logAndNotify(userEmail, shiftDate, phase, notes, dorJson) {
       const ts = new Date().toISOString()
       const dateLabel = ts.split('T')[0]
 
-      const SCORE_LABELS = { 1: 'Unacceptable', 2: 'Needs Improvement', 3: 'Acceptable', 4: 'Above Average', 5: 'Superior' }
-      const SCORE_COLORS = { 1: '#c44', 2: '#b87333', 3: '#888', 4: '#5a9', 5: '#4a9' }
-
-      const categoriesHtml = dorJson?.categories
-        ? Object.entries(dorJson.categories).map(([cat, entry]) => {
-            const score = entry?.score ?? 3
-            const color = SCORE_COLORS[score] || '#888'
-            const label = SCORE_LABELS[score] || ''
-            return `
-              <tr style="border-top:0.5px solid #1a1a1a;">
-                <td style="padding:8px 12px;color:#bbb;font-size:11px;vertical-align:top;">${cat.replace(/</g, '&lt;')}</td>
-                <td style="padding:8px 12px;color:${color};font-size:11px;font-weight:bold;white-space:nowrap;vertical-align:top;">${score} — ${label}</td>
-                <td style="padding:8px 12px;color:#888;font-size:11px;vertical-align:top;">${(entry?.narrative || '').replace(/</g, '&lt;')}</td>
-              </tr>`
-          }).join('')
-        : '<tr><td colspan="3" style="color:#666;font-size:11px;padding:8px;">No category data</td></tr>'
+      const summaryPreview = (dorJson?.overallSummary || '').slice(0, 300).replace(/</g, '&lt;')
 
       await resend.emails.send({
         from: 'JAR Intelligence <noreply@jarintel.com>',
         to: 'justin@jarintel.ai',
-        subject: `FTO Daily Observation Report Generated — ${dateLabel} — ${userEmail || 'unknown'}`,
+        subject: `DOR Generated — ${userEmail || 'unknown'} — ${shiftDate || dateLabel}`,
         html: `
-          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:800px;">
-            <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
-            <div style="color:#666;font-size:11px;margin-bottom:24px;">FTO Debrief Assistant · jarintel.ai/free-tools/fto-debrief</div>
+          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:600px;">
+            <div style="color:#fff;font-size:15px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
+            <div style="color:#666;font-size:11px;margin-bottom:20px;">FTO Debrief Assistant</div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">Submitted By</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Timestamp</td><td style="padding:8px 0;color:#fff;font-size:12px;">${ts}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Shift Date</td><td style="padding:8px 0;color:#fff;font-size:12px;">${shiftDate || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Phase</td><td style="padding:8px 0;color:#fff;font-size:12px;">${phase || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Recommendation</td><td style="padding:8px 0;color:${dorJson?.recommendContinuation ? '#5a9' : '#c44'};font-size:12px;">${dorJson?.recommendContinuation ? 'Continue Training' : 'Review Required'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:6px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Agency</td><td style="padding:6px 0;color:#fff;font-size:12px;">${agency || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Shift Date</td><td style="padding:6px 0;color:#fff;font-size:12px;">${shiftDate || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Phase</td><td style="padding:6px 0;color:#fff;font-size:12px;">${phase || '—'}</td></tr>
             </table>
             <div style="margin-bottom:16px;">
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">FTO Notes (Full Input)</div>
-              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(notes || '').replace(/</g, '&lt;')}</pre>
+              <div style="color:#888;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">Summary Preview</div>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:14px;">${summaryPreview}${dorJson?.overallSummary && dorJson.overallSummary.length > 300 ? '\n...' : ''}</pre>
             </div>
-            <div style="margin-bottom:16px;">
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Overall Summary</div>
-              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(dorJson?.overallSummary || '—').replace(/</g, '&lt;')}</pre>
-            </div>
-            <div>
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Category Scores</div>
-              <table style="width:100%;border-collapse:collapse;background:#080808;">
-                <tr style="border-bottom:1px solid #333;">
-                  <th style="padding:8px 12px;color:#555;font-size:10px;text-align:left;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Category</th>
-                  <th style="padding:8px 12px;color:#555;font-size:10px;text-align:left;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Score</th>
-                  <th style="padding:8px 12px;color:#555;font-size:10px;text-align:left;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Narrative</th>
-                </tr>
-                ${categoriesHtml}
-              </table>
-            </div>
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">JAR Intelligence · FTO Debrief Assistant · jarintel.ai</div>
+            <div style="color:#555;font-size:11px;font-style:italic;">Full report saved in Supabase usage_logs.</div>
+            <div style="margin-top:20px;padding-top:14px;border-top:1px solid #1a1a1a;color:#444;font-size:10px;">JAR Intelligence · jarintel.ai</div>
           </div>
         `,
       })
@@ -118,7 +97,7 @@ async function logAndNotify(userEmail, shiftDate, phase, notes, dorJson) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { userEmail, traineeName, ftoName, shiftDate, phase, notes } = req.body
+  const { userEmail, traineeName, ftoName, shiftDate, phase, notes, agency } = req.body
   if (!notes) return res.status(400).json({ error: 'Shift notes are required.' })
 
   const categoriesJson = ALL_CATEGORIES.reduce((acc, cat) => {
@@ -197,7 +176,7 @@ Return the JSON evaluation now.`,
       }
     }
 
-    logAndNotify(userEmail, shiftDate, phase, notes, dorJson).catch(err =>
+    logAndNotify(userEmail, agency, shiftDate, phase, notes, dorJson).catch(err =>
       console.error('[generate-dor] logAndNotify error:', err)
     )
 

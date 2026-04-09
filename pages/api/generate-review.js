@@ -4,53 +4,58 @@ import { Resend } from 'resend'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-async function logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, reportContent) {
-  // Insert usage log
+// SQL to run in Supabase:
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS input_data text;
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS agency text;
+// ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS tool_version text;
+
+async function logAndNotify(userEmail, agency, evalPeriod, supervisorNotes, nameMap, evalCategories, reportContent) {
+  const inputData = JSON.stringify({ evalPeriod, nameMap, evalCategories, supervisorNotes, agency })
+
   const { error: insertError } = await supabaseAdmin.from('usage_logs').insert({
     tool: 'performance-review',
     report_type: 'performance-review',
     user_email: userEmail || null,
+    agency: agency || null,
+    input_data: inputData,
     report_content: reportContent || null,
     created_at: new Date().toISOString(),
   })
   if (insertError) console.error('[logAndNotify] insert error:', insertError)
   else console.log('[logAndNotify] performance-review: insert ok')
 
-  // Send notification email
   if (process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY)
-      const nameMapHtml = nameMap && nameMap.length > 0
-        ? nameMap.map((n, i) => `<tr><td style="padding:4px 0;color:#888;font-size:11px;">${n}</td><td style="padding:4px 0;color:#fff;font-size:11px;">→ Employee ${String.fromCharCode(65 + i)}</td></tr>`).join('')
-        : '<tr><td colspan="2" style="color:#666;font-size:11px;">None</td></tr>'
-      const ts = new Date().toISOString()
-      const dateLabel = ts.split('T')[0]
+      const dateLabel = new Date().toISOString().split('T')[0]
+      const outputPreview = (reportContent || '').slice(0, 300).replace(/</g, '&lt;')
+      const employeeCount = nameMap?.length ?? 0
+      const categoryList = (evalCategories || '').split('\n').filter(Boolean).map(c => `<li style="font-size:11px;color:#bbb;padding:2px 0;">${c.replace(/</g, '&lt;')}</li>`).join('')
+
       await resend.emails.send({
         from: 'JAR Intelligence <noreply@jarintel.com>',
         to: 'justin@jarintel.ai',
-        subject: `Performance Review Generated — ${dateLabel} — ${userEmail || 'unknown'}`,
+        subject: `Review Generated — ${userEmail || 'unknown'} — ${dateLabel}`,
         html: `
-          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:700px;">
-            <div style="color:#fff;font-size:16px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
-            <div style="color:#666;font-size:11px;margin-bottom:24px;">Performance Review Engine · jarintel.ai/free-tools/performance-review</div>
+          <div style="font-family:monospace;background:#000;color:#bbb;padding:32px;max-width:600px;">
+            <div style="color:#fff;font-size:15px;font-weight:bold;margin-bottom:4px;">JAR Intelligence</div>
+            <div style="color:#666;font-size:11px;margin-bottom:20px;">Performance Review Engine</div>
             <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-              <tr><td style="padding:8px 0;color:#888;width:140px;font-size:12px;">Submitted By</td><td style="padding:8px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Timestamp</td><td style="padding:8px 0;color:#fff;font-size:12px;">${ts}</td></tr>
-              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Eval Period</td><td style="padding:8px 0;color:#fff;font-size:12px;">${evalPeriod || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;width:140px;font-size:12px;">User Email</td><td style="padding:6px 0;color:#fff;font-size:12px;">${userEmail || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Agency</td><td style="padding:6px 0;color:#fff;font-size:12px;">${agency || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Eval Period</td><td style="padding:6px 0;color:#fff;font-size:12px;">${evalPeriod || '—'}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;font-size:12px;">Employees</td><td style="padding:6px 0;color:#fff;font-size:12px;">${employeeCount}</td></tr>
             </table>
             <div style="margin-bottom:16px;">
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Anonymization Map</div>
-              <table style="border-collapse:collapse;">${nameMapHtml}</table>
+              <div style="color:#888;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">Categories Selected</div>
+              <ul style="margin:0;padding-left:16px;">${categoryList || '<li style="color:#666;font-size:11px;">None</li>'}</ul>
             </div>
             <div style="margin-bottom:16px;">
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Supervisor Notes (Full Input)</div>
-              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(supervisorNotes || '').replace(/</g, '&lt;')}</pre>
+              <div style="color:#888;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">Output Preview</div>
+              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:14px;">${outputPreview}${reportContent && reportContent.length > 300 ? '\n...' : ''}</pre>
             </div>
-            <div>
-              <div style="color:#888;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Full Generated Review</div>
-              <pre style="font-size:11px;color:#bbb;white-space:pre-wrap;word-break:break-word;margin:0;background:#080808;padding:16px;">${(reportContent || '').replace(/</g, '&lt;')}</pre>
-            </div>
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #222;color:#444;font-size:11px;">JAR Intelligence · Performance Review Engine · jarintel.ai</div>
+            <div style="color:#555;font-size:11px;font-style:italic;">Full report saved in Supabase usage_logs.</div>
+            <div style="margin-top:20px;padding-top:14px;border-top:1px solid #1a1a1a;color:#444;font-size:10px;">JAR Intelligence · jarintel.ai</div>
           </div>
         `,
       })
@@ -63,7 +68,7 @@ async function logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, rep
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { supervisorNotes, evalCategories, evalPeriod, nameMap, userEmail } = req.body
+  const { supervisorNotes, evalCategories, evalPeriod, nameMap, userEmail, agency } = req.body
 
   if (!supervisorNotes || !evalPeriod) {
     return res.status(400).json({ error: 'Missing required fields.' })
@@ -127,7 +132,7 @@ Write the full evaluation now. For each category produce the rating number, rati
     })
 
     // Log and notify non-blocking — failures must not affect the response
-    logAndNotify(userEmail, evalPeriod, supervisorNotes, nameMap, message.content[0].text)
+    logAndNotify(userEmail, agency, evalPeriod, supervisorNotes, nameMap, evalCategories, message.content[0].text)
       .catch(err => console.error('logAndNotify error:', err))
 
     res.status(200).json({ review: message.content[0].text })

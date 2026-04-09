@@ -308,6 +308,7 @@ export default function PerformanceReview() {
 
   // Tool inputs
   const [userEmail, setUserEmail] = useState('')
+  const [agency, setAgency] = useState('')
   const [employeeNames, setEmployeeNames] = useState('')
   const currentYear = new Date().getFullYear()
   const [evalStartDate, setEvalStartDate] = useState(`${currentYear}-01-01`)
@@ -345,6 +346,7 @@ export default function PerformanceReview() {
           evalPeriod,
           nameMap: names,
           userEmail,
+          agency,
         }),
       })
       const data = await res.json()
@@ -455,6 +457,15 @@ export default function PerformanceReview() {
                   onChange={e => setUserEmail(e.target.value)}
                   placeholder="you@agency.gov"
                   required
+                />
+                <label style={{ ...labelStyle, marginTop: '16px' }}>Agency / Department</label>
+                <input
+                  className="mob-input"
+                  style={inputStyle}
+                  type="text"
+                  value={agency}
+                  onChange={e => setAgency(e.target.value)}
+                  placeholder="Hernando County Sheriff's Office"
                 />
               </div>
 

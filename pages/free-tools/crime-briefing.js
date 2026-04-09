@@ -478,6 +478,7 @@ export default function CrimeBriefing() {
 
   // Tool state
   const [userEmail, setUserEmail] = useState('')
+  const [agency, setAgency] = useState('')
   const [csvContent, setCsvContent] = useState('')
   const [csvFileName, setCsvFileName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -523,7 +524,7 @@ export default function CrimeBriefing() {
       const res = await fetch('/api/generate-briefing', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ csvContent, jurisdiction, startDate, endDate, userEmail }),
+        body: JSON.stringify({ csvContent, jurisdiction, startDate, endDate, userEmail, agency }),
       })
       const data = await res.json()
       if (data.error) {
@@ -643,6 +644,15 @@ export default function CrimeBriefing() {
                   onChange={e => setUserEmail(e.target.value)}
                   placeholder="you@agency.gov"
                   required
+                />
+                <label style={{ ...labelStyle, marginTop: '16px' }}>Agency / Department</label>
+                <input
+                  className="mob-input"
+                  style={inputStyle}
+                  type="text"
+                  value={agency}
+                  onChange={e => setAgency(e.target.value)}
+                  placeholder="Hernando County Sheriff's Office"
                 />
               </div>
 
