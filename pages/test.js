@@ -56,13 +56,11 @@ const dimBtn = {
 // ── Views ─────────────────────────────────────────────────────────────────────
 
 // SIGN IN
-function SignInView({ onSwitchToRequest }) {
+function SignInView({ onSwitchToRequest, onSwitchToForgot }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [forgotSent, setForgotSent] = useState(false)
-  const [forgotLoading, setForgotLoading] = useState(false)
 
   async function handleSignIn(e) {
     e.preventDefault()
@@ -81,9 +79,63 @@ function SignInView({ onSwitchToRequest }) {
     }
   }
 
-  async function handleForgotPassword() {
-    if (!email.trim()) { setError('Enter your email above, then click Forgot Password.'); return }
-    setForgotLoading(true)
+  return (
+    <div style={{ maxWidth: '420px', margin: '0 auto' }}>
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Sign In</div>
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '32px' }}>Welcome back.</div>
+
+      <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <label style={labelStyle}>Email</label>
+          <input style={inputStyle} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@agency.gov" required />
+        </div>
+        <div>
+          <label style={labelStyle}>Password</label>
+          <input style={inputStyle} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••••••••" required />
+        </div>
+
+        {error && (
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: '#c44', textTransform: 'uppercase' }}>{error}</div>
+        )}
+
+        <button type="submit" disabled={loading} style={ghostBtn(loading)}
+          onMouseEnter={e => { if (!loading) e.target.style.borderColor = '#bbb' }}
+          onMouseLeave={e => { if (!loading) e.target.style.borderColor = '#666' }}
+        >
+          {loading ? 'Signing in...' : 'Sign In →'}
+        </button>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button type="button" style={dimBtn}
+            onClick={onSwitchToForgot}
+            onMouseEnter={e => e.target.style.color = '#888'}
+            onMouseLeave={e => e.target.style.color = '#555'}
+          >
+            Forgot password →
+          </button>
+          <button type="button" style={dimBtn}
+            onClick={onSwitchToRequest}
+            onMouseEnter={e => e.target.style.color = '#888'}
+            onMouseLeave={e => e.target.style.color = '#555'}
+          >
+            Request access →
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+// FORGOT PASSWORD
+function ForgotPasswordView({ onSwitchToSignIn }) {
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [sent, setSent] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setLoading(true)
     setError('')
     try {
       const res = await fetch('/api/auth/reset-password', {
@@ -93,33 +145,36 @@ function SignInView({ onSwitchToRequest }) {
       })
       const data = await res.json()
       if (data.error) setError(data.error)
-      else setForgotSent(true)
+      else setSent(true)
     } catch {
       setError('Request failed. Please try again.')
     } finally {
-      setForgotLoading(false)
+      setLoading(false)
     }
   }
 
   return (
     <div style={{ maxWidth: '420px', margin: '0 auto' }}>
-      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Sign In</div>
-      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '32px' }}>Welcome back.</div>
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', color: '#888', textTransform: 'uppercase', marginBottom: '10px' }}>// Forgot Password</div>
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '32px' }}>Reset password.</div>
 
-      {forgotSent ? (
+      {sent ? (
         <div style={{ background: '#080808', border: '0.5px solid #1a1a1a', padding: '28px' }}>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#888', marginBottom: '12px' }}>// Check your email</div>
-          <div style={{ fontSize: '14px', color: '#bbb', lineHeight: 1.8 }}>New credentials sent to <span style={{ color: '#fff' }}>{email}</span>. Check your inbox and sign in with the new password.</div>
+          <div style={{ fontSize: '14px', color: '#bbb', lineHeight: 1.8, marginBottom: '24px' }}>New credentials sent to <span style={{ color: '#fff' }}>{email}</span>. Check your inbox and sign in with the new password.</div>
+          <button type="button" style={dimBtn}
+            onClick={onSwitchToSignIn}
+            onMouseEnter={e => e.target.style.color = '#888'}
+            onMouseLeave={e => e.target.style.color = '#555'}
+          >
+            ← Back to Sign In
+          </button>
         </div>
       ) : (
-        <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
             <label style={labelStyle}>Email</label>
             <input style={inputStyle} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@agency.gov" required />
-          </div>
-          <div>
-            <label style={labelStyle}>Password</label>
-            <input style={inputStyle} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••••••••" required />
           </div>
 
           {error && (
@@ -130,23 +185,16 @@ function SignInView({ onSwitchToRequest }) {
             onMouseEnter={e => { if (!loading) e.target.style.borderColor = '#bbb' }}
             onMouseLeave={e => { if (!loading) e.target.style.borderColor = '#666' }}
           >
-            {loading ? 'Signing in...' : 'Sign In →'}
+            {loading ? 'Sending...' : 'Send Reset →'}
           </button>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button type="button" style={dimBtn} disabled={forgotLoading}
-              onClick={handleForgotPassword}
-              onMouseEnter={e => e.target.style.color = '#888'}
-              onMouseLeave={e => e.target.style.color = '#555'}
-            >
-              {forgotLoading ? 'Sending...' : 'Forgot password →'}
-            </button>
+          <div style={{ textAlign: 'left' }}>
             <button type="button" style={dimBtn}
-              onClick={onSwitchToRequest}
+              onClick={onSwitchToSignIn}
               onMouseEnter={e => e.target.style.color = '#888'}
               onMouseLeave={e => e.target.style.color = '#555'}
             >
-              Request access →
+              ← Back to Sign In
             </button>
           </div>
         </form>
@@ -303,7 +351,7 @@ export default function TestAuth() {
   // 'loading' | 'unauthenticated' | 'pending' | 'approved'
   const [authState, setAuthState] = useState('loading')
   const [userEmail, setUserEmail] = useState('')
-  const [view, setView] = useState('signin') // 'signin' | 'request'
+  const [view, setView] = useState('signin') // 'signin' | 'forgot' | 'request'
 
   async function checkApproval(session) {
     if (!session?.user) { setAuthState('unauthenticated'); return }
@@ -375,7 +423,9 @@ export default function TestAuth() {
 
           {authState === 'unauthenticated' && (
             view === 'signin'
-              ? <SignInView onSwitchToRequest={() => setView('request')} />
+              ? <SignInView onSwitchToRequest={() => setView('request')} onSwitchToForgot={() => setView('forgot')} />
+              : view === 'forgot'
+              ? <ForgotPasswordView onSwitchToSignIn={() => setView('signin')} />
               : <AccessRequestView onSwitchToSignIn={() => setView('signin')} />
           )}
 
