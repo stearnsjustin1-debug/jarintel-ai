@@ -363,7 +363,7 @@ export default function FtoDebrief() {
     <>
       <Head>
         <title>FTO Debrief Assistant — JAR Intelligence</title>
-        <meta name="description" content="Turn end-of-shift FTO debrief into a completed Daily Observation Report in minutes." />
+        <meta name="description" content="Turn end-of-shift FTO observations into a completed Daily Observation Report in minutes. AI scores all 27 categories and writes the narrative." />
       </Head>
 
       <main style={{ background: '#000', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" }}>

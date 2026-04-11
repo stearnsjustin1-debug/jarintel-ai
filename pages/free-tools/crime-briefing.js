@@ -565,7 +565,7 @@ export default function CrimeBriefing() {
     <>
       <Head>
         <title>Crime Intelligence Briefing — JAR Intelligence</title>
-        <meta name="description" content="AI-powered crime pattern analysis and intelligence briefings from CAD/RMS exports." />
+        <meta name="description" content="Upload your CAD data and get an AI-generated crime intelligence briefing with interactive map, hot spots, time patterns, and patrol recommendations." />
       </Head>
 
       <main style={{ background: '#000', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" }}>

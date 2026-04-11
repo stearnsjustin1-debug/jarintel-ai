@@ -135,8 +135,8 @@ export default function Solutions() {
   return (
     <>
       <Head>
-        <title>Custom Solutions — JAR Intelligence</title>
-        <meta name="description" content="Tell us what's slowing you down. We'll build an AI solution around it." />
+        <title>Custom AI Solutions — JAR Intelligence</title>
+        <meta name="description" content="Tell us what's slowing you down. We build custom AI solutions for law enforcement and security operations." />
       </Head>
 
       <main style={{ background: '#000', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" }}>

@@ -16,8 +16,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>JAR Intelligence</title>
-        <meta name="description" content="JAR Intelligence — AI Tools" />
+        <title>JAR Intelligence — AI Tools for Law Enforcement</title>
+        <meta name="description" content="Free AI tools for law enforcement agencies. Performance reviews, crime intelligence briefings, and FTO daily observation reports." />
       </Head>
 
       <main style={{

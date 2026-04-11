@@ -377,7 +377,7 @@ export default function PerformanceReview() {
     <>
       <Head>
         <title>Performance Review Engine — JAR Intelligence</title>
-        <meta name="description" content="AI-generated law enforcement performance evaluations. Anonymized before processing." />
+        <meta name="description" content="Generate AI-powered law enforcement performance reviews in minutes. Built around your agency's eval template with anonymization built in." />
       </Head>
 
       <main style={{ background: '#000', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" }}>
